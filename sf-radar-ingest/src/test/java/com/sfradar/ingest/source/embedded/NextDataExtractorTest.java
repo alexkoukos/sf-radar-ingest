@@ -55,6 +55,8 @@ class NextDataExtractorTest {
 
         assertEquals(Boolean.FALSE, known.isFree());
         assertEquals(Boolean.TRUE, known.requireApproval());
+        assertEquals("disabled", known.waitlistStatus());
+        assertEquals("open", known.registrationAvailability());
 
         assertEquals("Daytona", known.hostName());
     }
