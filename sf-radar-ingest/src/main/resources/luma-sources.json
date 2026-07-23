@@ -3,7 +3,22 @@
   "userAgent": "SFRadarBot/1.0 (+https://github.com/alexkoukos/sf-radar; non-commercial demo project)",
   "targets": [
     { "label": "discover:sf", "url": "https://luma.com/sf" },
+
     { "label": "calendar:cal-R9IQUb53FUrolUF", "url": "https://luma.com/calendar/cal-R9IQUb53FUrolUF" },
-    { "label": "calendar:cal-cRAkoeu56h8zaxC", "url": "https://luma.com/calendar/cal-cRAkoeu56h8zaxC" }
+    { "label": "calendar:cal-cRAkoeu56h8zaxC", "url": "https://luma.com/calendar/cal-cRAkoeu56h8zaxC" },
+
+    { "label": "calendar:ai-sf", "url": "https://luma.com/ai-sf" },
+    { "label": "calendar:bayareafoundersclub", "url": "https://luma.com/bayareafoundersclub" },
+    { "label": "calendar:genai-sf", "url": "https://luma.com/genai-sf" },
+    { "label": "calendar:hackathon_collections", "url": "https://luma.com/hackathon_collections" },
+    { "label": "calendar:sf-builders-collective", "url": "https://luma.com/sf-builders-collective" },
+    { "label": "calendar:theaibuildersdev", "url": "https://luma.com/theaibuildersdev" },
+    { "label": "calendar:9zero", "url": "https://luma.com/9zero" },
+    { "label": "calendar:sftw", "url": "https://luma.com/sftw" },
+    { "label": "calendar:cal-cf0Ly7rAuHG5Gyt", "url": "https://luma.com/calendar/cal-cf0Ly7rAuHG5Gyt" },
+    { "label": "calendar:sf-social", "url": "https://luma.com/sf-social" },
+    { "label": "calendar:bayareafoundernetwork", "url": "https://luma.com/bayareafoundernetwork" },
+    { "label": "calendar:womentechmeetup", "url": "https://luma.com/womentechmeetup" },
+    { "label": "calendar:devs", "url": "https://luma.com/devs" }
   ]
 }
