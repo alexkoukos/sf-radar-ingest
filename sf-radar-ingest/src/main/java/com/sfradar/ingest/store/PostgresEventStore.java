@@ -1,6 +1,9 @@
 package com.sfradar.ingest.store;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sfradar.ingest.model.ClassifiedEvent;
+import com.sfradar.ingest.run.RunSummary;
 import com.sfradar.ingest.source.RawEvent;
 
 import java.io.IOException;
@@ -57,10 +60,21 @@ public final class PostgresEventStore {
             last_seen_at = now()
         """;
 
+    private static final String RECORD_RUN_SQL = """
+        INSERT INTO ingestion_runs (status, total_events, persisted, source_summary)
+        VALUES (?, ?, ?, ?::jsonb)
+        """;
+
     private final Connection connection;
+    private final ObjectMapper objectMapper;
 
     public PostgresEventStore(Connection connection) {
+        this(connection, new ObjectMapper());
+    }
+
+    public PostgresEventStore(Connection connection, ObjectMapper objectMapper) {
         this.connection = connection;
+        this.objectMapper = objectMapper;
     }
 
     public void ensureSchema() {
@@ -108,6 +122,27 @@ public final class PostgresEventStore {
         ps.setString(i++, raw.discoveredVia());
         ps.setString(i++, classified.category().name());
         ps.setString(i, classified.rsvpType().name());
+    }
+
+    /**
+     * Records the outcome of one ingest run - always, regardless of whether
+     * it was persisted. Callers decide {@code persisted} themselves: a total
+     * failure (see {@link RunSummary#isTotalFailure()}) still gets a row
+     * here for observability, just with persisted=false and no upsert ever
+     * having been attempted.
+     */
+    public void recordRun(RunSummary summary, boolean persisted) {
+        try (PreparedStatement ps = connection.prepareStatement(RECORD_RUN_SQL)) {
+            ps.setString(1, summary.isTotalFailure() ? "failed" : "succeeded");
+            ps.setInt(2, summary.totalEvents());
+            ps.setBoolean(3, persisted);
+            ps.setString(4, objectMapper.writeValueAsString(summary.targets()));
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("failed to record ingestion run", e);
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(new IOException(e));
+        }
     }
 
     private static OffsetDateTime toOffsetDateTime(Instant instant) {
