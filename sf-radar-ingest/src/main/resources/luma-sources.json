@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "userAgent": "SFRadarBot/1.0 (+https://github.com/alexkoukos/sf-radar; non-commercial demo project)",
+  "targets": [
+    { "label": "discover:sf", "url": "https://luma.com/sf" },
+    { "label": "calendar:cal-R9IQUb53FUrolUF", "url": "https://luma.com/calendar/cal-R9IQUb53FUrolUF" },
+    { "label": "calendar:cal-cRAkoeu56h8zaxC", "url": "https://luma.com/calendar/cal-cRAkoeu56h8zaxC" }
+  ]
+}

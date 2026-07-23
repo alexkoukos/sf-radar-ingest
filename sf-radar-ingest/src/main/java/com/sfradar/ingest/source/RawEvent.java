@@ -1,0 +1,34 @@
+package com.sfradar.ingest.source;
+
+import java.time.Instant;
+
+/**
+ * As scraped from Luma's embedded __NEXT_DATA__ payload, source-shaped and
+ * deliberately loose. Every field beyond the signature fields (apiId,
+ * startsAt, endsAt, name, urlSlug) may be null - Luma's own data is
+ * inconsistently populated across events (e.g. price is sometimes null even
+ * when isFree is false).
+ */
+public record RawEvent(
+    String apiId,
+    String name,
+    String urlSlug,
+    Instant startsAt,
+    Instant endsAt,
+    boolean isOnline,
+    String hostName,
+    String city,
+    String region,
+    String sublocality,
+    String countryCode,
+    Double latitude,
+    Double longitude,
+    Boolean isFree,
+    Integer priceCents,
+    Boolean requireApproval,
+    String waitlistStatus,
+    Boolean waitlistActive,
+    String calendarAccessLevel,
+    String discoveredVia
+) {
+}
