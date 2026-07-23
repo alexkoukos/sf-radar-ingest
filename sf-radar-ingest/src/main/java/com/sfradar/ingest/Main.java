@@ -6,11 +6,14 @@ import com.sfradar.ingest.config.DbConfig;
 import com.sfradar.ingest.config.SourcesConfig;
 import com.sfradar.ingest.config.SourcesConfigLoader;
 import com.sfradar.ingest.model.ClassifiedEvent;
+import com.sfradar.ingest.run.RunSummary;
+import com.sfradar.ingest.run.TargetOutcome;
 import com.sfradar.ingest.source.EventSource;
 import com.sfradar.ingest.source.RawEvent;
 import com.sfradar.ingest.source.embedded.EventShapeMatcher;
 import com.sfradar.ingest.source.embedded.HttpEmbeddedEventSource;
 import com.sfradar.ingest.source.embedded.NextDataExtractor;
+import com.sfradar.ingest.source.embedded.NextDataShapeException;
 import com.sfradar.ingest.store.PostgresEventStore;
 
 import java.net.http.HttpClient;
@@ -29,8 +32,11 @@ import java.util.stream.Collectors;
  * Entry point: reads luma-sources.json, fetches every target over HTTP,
  * classifies each event's category and RSVP type, persists the results to
  * Postgres, and prints per-source counts plus a category/RSVP breakdown.
- * One failing source is logged and skipped rather than aborting the whole
- * run.
+ * A single target's ordinary failure (network error, non-200) is logged
+ * and skipped rather than aborting the run. A total failure - zero events
+ * across every target, or any target's structural shape-match break -
+ * skips the upsert entirely and exits non-zero; every run is recorded to
+ * ingestion_runs either way.
  */
 public final class Main {
 
@@ -52,13 +58,19 @@ public final class Main {
             .toList();
 
         List<ClassifiedEvent> allEvents = new ArrayList<>();
+        List<TargetOutcome> outcomes = new ArrayList<>();
         for (EventSource source : sources) {
             try {
                 List<RawEvent> events = source.fetch();
                 System.out.println(source.label() + ": " + events.size() + " events");
                 events.stream().map(classifier::classify).forEach(allEvents::add);
+                outcomes.add(TargetOutcome.success(source.label(), events.size()));
+            } catch (NextDataShapeException e) {
+                System.err.println(source.label() + ": STRUCTURAL BREAK - " + e.getMessage());
+                outcomes.add(TargetOutcome.failure(source.label(), true, e.getMessage()));
             } catch (Exception e) {
                 System.err.println(source.label() + ": FAILED - " + e.getMessage());
+                outcomes.add(TargetOutcome.failure(source.label(), false, e.getMessage()));
             }
         }
 
@@ -66,13 +78,26 @@ public final class Main {
         printBreakdown("By category", allEvents, e -> e.category().name());
         printBreakdown("By RSVP type", allEvents, e -> e.rsvpType().name());
 
+        RunSummary runSummary = new RunSummary(outcomes, allEvents.size());
+        boolean totalFailure = runSummary.isTotalFailure();
+        if (totalFailure) {
+            System.err.println("Run-level failure (zero events or a structural break) - skipping upsert");
+        }
+
         DbConfig dbConfig = DbConfig.fromEnv();
         try (Connection connection = DriverManager.getConnection(
                 dbConfig.jdbcUrl(), dbConfig.user(), dbConfig.password())) {
             PostgresEventStore store = new PostgresEventStore(connection);
             store.ensureSchema();
-            store.upsertAll(allEvents);
-            System.out.println("Persisted " + allEvents.size() + " events to Postgres");
+            if (!totalFailure) {
+                store.upsertAll(allEvents);
+                System.out.println("Persisted " + allEvents.size() + " events to Postgres");
+            }
+            store.recordRun(runSummary, !totalFailure);
+        }
+
+        if (totalFailure) {
+            System.exit(1);
         }
     }
 

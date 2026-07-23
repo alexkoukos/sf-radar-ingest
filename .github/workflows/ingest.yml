@@ -1,0 +1,36 @@
+name: Ingest
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sf-radar-ingest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      # -DskipTests: correctness is verified by the test suite on every code
+      # change, not by re-running Testcontainers on a 6-hourly production cron.
+      - name: Build
+        run: ./mvnw -B -q -DskipTests package
+
+      - name: Run ingest
+        env:
+          # Supavisor SESSION pooler connection string, not a direct
+          # connection - GitHub-hosted runners commonly lack reliable IPv6
+          # egress, which is what direct Supabase connections require.
+          SFRADAR_DB_URL: ${{ secrets.SFRADAR_DB_URL }}
+          SFRADAR_DB_USER: ${{ secrets.SFRADAR_DB_USER }}
+          SFRADAR_DB_PASSWORD: ${{ secrets.SFRADAR_DB_PASSWORD }}
+        run: java -jar target/sf-radar-ingest.jar
