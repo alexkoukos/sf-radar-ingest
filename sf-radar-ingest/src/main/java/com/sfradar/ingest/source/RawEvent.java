@@ -27,7 +27,7 @@ public record RawEvent(
     Integer priceCents,
     Boolean requireApproval,
     String waitlistStatus,
-    Boolean waitlistActive,
+    String registrationAvailability,
     String calendarAccessLevel,
     String discoveredVia
 ) {

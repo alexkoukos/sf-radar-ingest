@@ -93,8 +93,8 @@ public final class EventShapeMatcher {
             }
         }
         Boolean requireApproval = boolOrNull(ticketInfo, "require_approval");
-        String waitlistStatus = textOrNull(ticketInfo, "waitlist_status");
-        Boolean waitlistActive = boolOrNull(entry, "waitlist_active");
+        String waitlistStatus = textOrNull(event, "waitlist_status");
+        String registrationAvailability = textOrNull(entry, "registration_availability");
 
         JsonNode calendar = entry.get("calendar");
         String calendarAccessLevel = textOrNull(calendar, "access_level");
@@ -102,7 +102,7 @@ public final class EventShapeMatcher {
         return new RawEvent(
             apiId, name, urlSlug, startsAt, endsAt, isOnline, hostName,
             city, region, sublocality, countryCode, latitude, longitude,
-            isFree, priceCents, requireApproval, waitlistStatus, waitlistActive,
+            isFree, priceCents, requireApproval, waitlistStatus, registrationAvailability,
             calendarAccessLevel, discoveredVia
         );
     }
