@@ -2,7 +2,7 @@ package com.sfradar.ingest.store;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sfradar.ingest.model.ClassifiedEvent;
+import com.sfradar.ingest.model.ScoredEvent;
 import com.sfradar.ingest.run.RunSummary;
 import com.sfradar.ingest.source.RawEvent;
 
@@ -20,7 +20,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 /**
- * Upserts classified events into Postgres, keyed on Luma's apiId. Re-running
+ * Upserts scored events into Postgres, keyed on Luma's apiId. Re-running
  * ingest against an already-seen event refreshes its fields and
  * last_seen_at while leaving first_seen_at untouched, so repeated runs
  * don't create duplicates.
@@ -33,8 +33,8 @@ public final class PostgresEventStore {
             city, region, sublocality, country_code, latitude, longitude,
             is_free, price_cents, require_approval, waitlist_status,
             registration_availability, calendar_access_level, discovered_via,
-            category, rsvp_type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            category, rsvp_type, score
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (api_id) DO UPDATE SET
             name = EXCLUDED.name,
             url_slug = EXCLUDED.url_slug,
@@ -54,9 +54,18 @@ public final class PostgresEventStore {
             waitlist_status = EXCLUDED.waitlist_status,
             registration_availability = EXCLUDED.registration_availability,
             calendar_access_level = EXCLUDED.calendar_access_level,
-            discovered_via = EXCLUDED.discovered_via,
+            -- discovered_via is observability only, never the dedupe key, so it
+            -- accumulates across runs instead of being clobbered by whichever
+            -- run happened to touch the row last.
+            discovered_via = (
+                SELECT string_agg(DISTINCT via, ',' ORDER BY via)
+                FROM unnest(
+                    string_to_array(events.discovered_via, ',') || string_to_array(EXCLUDED.discovered_via, ',')
+                ) AS via
+            ),
             category = EXCLUDED.category,
             rsvp_type = EXCLUDED.rsvp_type,
+            score = EXCLUDED.score,
             last_seen_at = now()
         """;
 
@@ -85,10 +94,10 @@ public final class PostgresEventStore {
         }
     }
 
-    public void upsertAll(List<ClassifiedEvent> events) {
+    public void upsertAll(List<ScoredEvent> events) {
         try (PreparedStatement ps = connection.prepareStatement(UPSERT_SQL)) {
-            for (ClassifiedEvent classified : events) {
-                bind(ps, classified);
+            for (ScoredEvent scored : events) {
+                bind(ps, scored);
                 ps.addBatch();
             }
             ps.executeBatch();
@@ -97,8 +106,8 @@ public final class PostgresEventStore {
         }
     }
 
-    private void bind(PreparedStatement ps, ClassifiedEvent classified) throws SQLException {
-        RawEvent raw = classified.raw();
+    private void bind(PreparedStatement ps, ScoredEvent scored) throws SQLException {
+        RawEvent raw = scored.raw();
         int i = 1;
         ps.setString(i++, raw.apiId());
         ps.setString(i++, raw.name());
@@ -120,8 +129,9 @@ public final class PostgresEventStore {
         ps.setString(i++, raw.registrationAvailability());
         ps.setString(i++, raw.calendarAccessLevel());
         ps.setString(i++, raw.discoveredVia());
-        ps.setString(i++, classified.category().name());
-        ps.setString(i, classified.rsvpType().name());
+        ps.setString(i++, scored.category().name());
+        ps.setString(i++, scored.rsvpType().name());
+        ps.setDouble(i, scored.score());
     }
 
     /**
