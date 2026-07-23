@@ -31,4 +31,14 @@ public record RawEvent(
     String calendarAccessLevel,
     String discoveredVia
 ) {
+
+    /** Rebuilds this event with a different discoveredVia - used to union it across targets. */
+    public RawEvent withDiscoveredVia(String discoveredVia) {
+        return new RawEvent(
+            apiId, name, urlSlug, startsAt, endsAt, isOnline, hostName,
+            city, region, sublocality, countryCode, latitude, longitude,
+            isFree, priceCents, requireApproval, waitlistStatus, registrationAvailability,
+            calendarAccessLevel, discoveredVia
+        );
+    }
 }

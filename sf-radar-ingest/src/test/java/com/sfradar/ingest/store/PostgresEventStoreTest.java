@@ -3,6 +3,7 @@ package com.sfradar.ingest.store;
 import com.sfradar.ingest.model.Category;
 import com.sfradar.ingest.model.ClassifiedEvent;
 import com.sfradar.ingest.model.RsvpType;
+import com.sfradar.ingest.model.ScoredEvent;
 import com.sfradar.ingest.run.RunSummary;
 import com.sfradar.ingest.run.TargetOutcome;
 import com.sfradar.ingest.source.RawEvent;
@@ -41,11 +42,11 @@ class PostgresEventStoreTest {
             PostgresEventStore store = new PostgresEventStore(connection);
             store.ensureSchema();
 
-            store.upsertAll(List.of(classifiedEvent("evt-insert", "Founder Mixer")));
+            store.upsertAll(List.of(scoredEvent("evt-insert", "Founder Mixer")));
 
             try (Statement statement = connection.createStatement();
                  ResultSet rs = statement.executeQuery(
-                     "SELECT name, category, rsvp_type, city, is_free, price_cents "
+                     "SELECT name, category, rsvp_type, city, is_free, price_cents, score "
                          + "FROM events WHERE api_id = 'evt-insert'")) {
                 assertTrue(rs.next());
                 assertEquals("Founder Mixer", rs.getString("name"));
@@ -54,6 +55,7 @@ class PostgresEventStoreTest {
                 assertEquals("San Francisco", rs.getString("city"));
                 assertFalse(rs.getBoolean("is_free"));
                 assertEquals(2500, rs.getInt("price_cents"));
+                assertEquals(0.5, rs.getDouble("score"), 0.0001);
                 assertFalse(rs.next());
             }
         }
@@ -65,8 +67,8 @@ class PostgresEventStoreTest {
             PostgresEventStore store = new PostgresEventStore(connection);
             store.ensureSchema();
 
-            store.upsertAll(List.of(classifiedEvent("evt-update", "Original Name")));
-            store.upsertAll(List.of(classifiedEvent("evt-update", "Renamed Event")));
+            store.upsertAll(List.of(scoredEvent("evt-update", "Original Name")));
+            store.upsertAll(List.of(scoredEvent("evt-update", "Renamed Event")));
 
             try (Statement statement = connection.createStatement();
                  ResultSet rs = statement.executeQuery(
@@ -136,12 +138,12 @@ class PostgresEventStoreTest {
 
             Instant now = Instant.now();
             store.upsertAll(List.of(
-                classifiedEventStartingAt("in-window-fresh", now),
-                classifiedEventStartingAt("beyond-window", now.plus(10, ChronoUnit.DAYS))));
+                scoredEventStartingAt("in-window-fresh", now),
+                scoredEventStartingAt("beyond-window", now.plus(10, ChronoUnit.DAYS))));
 
             // A third event that's within the time window but hasn't been seen in
             // over 24h - simulates a ghost event that's aged past the grace window.
-            store.upsertAll(List.of(classifiedEventStartingAt("in-window-stale", now)));
+            store.upsertAll(List.of(scoredEventStartingAt("in-window-stale", now)));
             try (Statement statement = connection.createStatement()) {
                 statement.execute(
                     "UPDATE events SET last_seen_at = now() - interval '25 hours' "
@@ -158,27 +160,51 @@ class PostgresEventStoreTest {
         }
     }
 
+    @Test
+    void reUpsertingWithADifferentDiscoveredViaUnionsRatherThanOverwrites() throws SQLException {
+        try (Connection connection = newConnection()) {
+            PostgresEventStore store = new PostgresEventStore(connection);
+            store.ensureSchema();
+
+            store.upsertAll(List.of(scoredEvent("evt-multi-source", "Founder Mixer", "discover:sf")));
+            store.upsertAll(List.of(
+                scoredEvent("evt-multi-source", "Founder Mixer", "calendar:cal-R9IQUb53FUrolUF")));
+
+            try (Statement statement = connection.createStatement();
+                 ResultSet rs = statement.executeQuery(
+                     "SELECT discovered_via FROM events WHERE api_id = 'evt-multi-source'")) {
+                assertTrue(rs.next());
+                assertEquals("calendar:cal-R9IQUb53FUrolUF,discover:sf", rs.getString("discovered_via"));
+                assertFalse(rs.next());
+            }
+        }
+    }
+
     private Connection newConnection() throws SQLException {
         return DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
     }
 
-    private ClassifiedEvent classifiedEvent(String apiId, String name) {
+    private ScoredEvent scoredEvent(String apiId, String name) {
+        return scoredEvent(apiId, name, "test");
+    }
+
+    private ScoredEvent scoredEvent(String apiId, String name, String discoveredVia) {
         RawEvent raw = new RawEvent(
             apiId, name, "test-event", Instant.EPOCH, Instant.EPOCH.plus(1, ChronoUnit.HOURS), false,
             "Acme Host", "San Francisco", "CA", "SoMa", "US",
             37.7749, -122.4194, false, 2500, true,
-            "none", "open", "full", "test"
+            "none", "open", "full", discoveredVia
         );
-        return new ClassifiedEvent(raw, Category.FOUNDER_SOCIAL, RsvpType.OPEN);
+        return new ScoredEvent(new ClassifiedEvent(raw, Category.FOUNDER_SOCIAL, RsvpType.OPEN), 0.5);
     }
 
-    private ClassifiedEvent classifiedEventStartingAt(String apiId, Instant startsAt) {
+    private ScoredEvent scoredEventStartingAt(String apiId, Instant startsAt) {
         RawEvent raw = new RawEvent(
             apiId, apiId, "test-event", startsAt, startsAt.plus(1, ChronoUnit.HOURS), false,
             "Acme Host", "San Francisco", "CA", "SoMa", "US",
             37.7749, -122.4194, false, 2500, true,
             "none", "open", "full", "test"
         );
-        return new ClassifiedEvent(raw, Category.FOUNDER_SOCIAL, RsvpType.OPEN);
+        return new ScoredEvent(new ClassifiedEvent(raw, Category.FOUNDER_SOCIAL, RsvpType.OPEN), 0.5);
     }
 }

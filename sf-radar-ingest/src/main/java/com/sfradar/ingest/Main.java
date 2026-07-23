@@ -5,9 +5,12 @@ import com.sfradar.ingest.classify.EventClassifier;
 import com.sfradar.ingest.config.DbConfig;
 import com.sfradar.ingest.config.SourcesConfig;
 import com.sfradar.ingest.config.SourcesConfigLoader;
+import com.sfradar.ingest.dedupe.EventDeduper;
 import com.sfradar.ingest.model.ClassifiedEvent;
+import com.sfradar.ingest.model.ScoredEvent;
 import com.sfradar.ingest.run.RunSummary;
 import com.sfradar.ingest.run.TargetOutcome;
+import com.sfradar.ingest.score.EventScorer;
 import com.sfradar.ingest.source.EventSource;
 import com.sfradar.ingest.source.RawEvent;
 import com.sfradar.ingest.source.embedded.EventShapeMatcher;
@@ -30,8 +33,9 @@ import java.util.stream.Collectors;
 
 /**
  * Entry point: reads luma-sources.json, fetches every target over HTTP,
- * classifies each event's category and RSVP type, persists the results to
- * Postgres, and prints per-source counts plus a category/RSVP breakdown.
+ * classifies each event's category and RSVP type, collapses duplicates
+ * found via more than one target, scores what's left, persists the results
+ * to Postgres, and prints per-source counts plus a category/RSVP breakdown.
  * A single target's ordinary failure (network error, non-200) is logged
  * and skipped rather than aborting the run. A total failure - zero events
  * across every target, or any target's structural shape-match break -
@@ -75,8 +79,14 @@ public final class Main {
         }
 
         System.out.println("Total events ingested: " + allEvents.size());
-        printBreakdown("By category", allEvents, e -> e.category().name());
-        printBreakdown("By RSVP type", allEvents, e -> e.rsvpType().name());
+
+        List<ClassifiedEvent> deduped = new EventDeduper().dedupe(allEvents);
+        System.out.println("Unique events after dedupe: " + deduped.size());
+        printBreakdown("By category", deduped, e -> e.category().name());
+        printBreakdown("By RSVP type", deduped, e -> e.rsvpType().name());
+
+        EventScorer scorer = new EventScorer();
+        List<ScoredEvent> scoredEvents = deduped.stream().map(scorer::score).toList();
 
         RunSummary runSummary = new RunSummary(outcomes, allEvents.size());
         boolean totalFailure = runSummary.isTotalFailure();
@@ -90,8 +100,8 @@ public final class Main {
             PostgresEventStore store = new PostgresEventStore(connection);
             store.ensureSchema();
             if (!totalFailure) {
-                store.upsertAll(allEvents);
-                System.out.println("Persisted " + allEvents.size() + " events to Postgres");
+                store.upsertAll(scoredEvents);
+                System.out.println("Persisted " + scoredEvents.size() + " events to Postgres");
             }
             store.recordRun(runSummary, !totalFailure);
         }
