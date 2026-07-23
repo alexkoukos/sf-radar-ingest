@@ -16,7 +16,7 @@ class SourcesConfigLoaderTest {
 
         assertEquals(1, config.version());
         assertTrue(config.userAgent().startsWith("SFRadarBot/1.0"));
-        assertEquals(3, config.targets().size());
+        assertEquals(16, config.targets().size());
 
         SourcesConfig.Target first = config.targets().get(0);
         assertEquals("discover:sf", first.label());
