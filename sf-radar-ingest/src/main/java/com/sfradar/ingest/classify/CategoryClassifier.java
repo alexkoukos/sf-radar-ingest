@@ -20,11 +20,33 @@ public final class CategoryClassifier {
     }
 
     private static final List<Rule> RULES = List.of(
-        new Rule(Category.HACKATHON, List.of("hackathon")),
-        new Rule(Category.DEMO_DAY, List.of("demo day", "pitch night", "pitch competition")),
-        new Rule(Category.INVESTOR_MEETUP, List.of("investor", "venture capital")),
-        new Rule(Category.FOUNDER_SOCIAL, List.of("founder")),
-        new Rule(Category.GENERAL_NETWORKING, List.of("networking", "mixer", "meetup", "social"))
+        // "hack" alone (not just "hackathon") catches real Day 3 misses like
+        // "Hack Night", "Hack Day", "Hacks", and "HackSprint". "build day"/
+        // "build fest"/"jam session" cover build-style hackathons that never
+        // say "hack" at all. Deliberately no bare "build" or "challenge"-free
+        // wording - "You.com...Build a Trusted Answer Experience" is a
+        // product talk, not a hackathon, and would false-positive on it.
+        new Rule(Category.HACKATHON,
+            List.of("hackathon", "hack", "challenge", "build day", "build fest", "jam session")),
+        // "demo" alone rather than just "demo day"/"demo night" - real
+        // events use both, plus "AI Demo Series". "showcase" is a synonym
+        // seen on "WebA Showcase".
+        new Rule(Category.DEMO_DAY, List.of("demo", "pitch night", "pitch competition", "showcase")),
+        // "angel" for angel investors ("Equity Angels"). Deliberately no
+        // bare "capital" - "Human Performance, Capital & Innovation" and
+        // "Comma Capital" (a VC's name, not the event's subject) are real
+        // events that would false-positive on it.
+        new Rule(Category.INVESTOR_MEETUP, List.of("investor", "venture", "angel")),
+        new Rule(Category.FOUNDER_SOCIAL, List.of("founder", "startup school")),
+        // The broadest, lowest-priority bucket - catches informal/social
+        // gathering formats (meals, lounges, "builder" as this ecosystem's
+        // catch-all self-identifier) and structured-but-still-networking
+        // formats (workshop, masterclass, conference/summit/forum/congress)
+        // that don't fit any more specific category above.
+        new Rule(Category.GENERAL_NETWORKING, List.of(
+            "networking", "mixer", "meetup", "meet up", "social", "mingle", "builder",
+            "breakfast", "dinner", "happy hour", "workshop", "masterclass", "tech talk",
+            "speakeasy", "conference", "summit", "forum", "congress"))
     );
 
     public Category classify(RawEvent event) {
