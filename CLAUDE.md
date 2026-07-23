@@ -57,22 +57,19 @@ Repo: github.com/alexkoukos/sf-radar-ingest (public)
 - Fail-loud persistence: any total failure skips the upsert entirely —
   `events` table is provably untouched, last good snapshot stays live.
 
-## Open / branch-dependent decisions (resolve early, don't assume)
+## Open / branch-dependent decisions — resolved Day 1
 
-- **Location data**: unconfirmed whether Luma's list-level payload
-  includes real venue/address/city/geo, or just a generic
-  "San Francisco, CA" string. If it doesn't exist: delete
-  `LocationFilter` and `VenueScorer`, redistribute that scoring weight,
-  and rely on target-list curation (curated calendars are already
-  SF-scoped) instead of a location filter. Do NOT fetch per-event detail
-  pages to recover this — multiplies request volume, breaks politeness.
-- **Volume**: a single snapshot fetch of luma.com/sf returned ~20 events
-  clustered in a 1-2 day window, not spread across 14 days — may need
-  pagination or reliance on curated community calendars for density.
-- **Fetch origin**: untested whether luma.com/sf returns different
-  results from this dev machine (Greece) vs a GitHub Actions runner
-  (US-based). If it differs, the Actions runner's view is what matters
-  for production.
+- **Location data**: confirmed rich. 20/20 sampled events on luma.com/sf
+  had city/sublocality/region/country_code and lat/long (some exact
+  address + Google place_id, some privacy-obfuscated coordinates for the
+  venue-type meetups). `LocationFilter`/`VenueScorer` stay in the plan.
+- **Volume**: confirmed sparse, as suspected. luma.com/sf gives ~20
+  events clustered in a 24-48h window. The two placeholder calendars in
+  luma-sources.json are even thinner (1 and 2 events each). Day 3's
+  10-15 curated calendars are load-bearing for density, not padding.
+- **Fetch origin**: resolved via the first live `ingest.yml` run
+  (2026-07-23, GitHub-hosted ubuntu runner, US). Same 20/1/2 per-target
+  counts as the Greece dev machine — no observed geographic difference.
 
 ## Deployment (load-bearing, not just for the demo)
 
