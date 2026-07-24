@@ -1,247 +1,500 @@
+/* App-level layout on top of the Modernist design system (styles/modernist.css).
+   That file owns tokens + reusable component classes (.btn, .tag, .card,
+   .nav, .dialog); everything here is this page's specific layout. */
+
+/* Fluid, not capped - padding scales with viewport via clamp() instead of a
+   fixed max-width, so the card grid actually gets more room (more columns)
+   on a wide desktop rather than sitting in a centered column with dead
+   space either side. */
 .dashboard {
-  max-width: 640px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 0 clamp(16px, 4vw, 56px) var(--space-8);
   text-align: left;
+  width: 100%;
 }
 
-.dashboard h1 {
-  text-align: left;
+.nav {
+  flex-wrap: wrap;
+  margin: 0 calc(-1 * clamp(16px, 4vw, 56px));
+  padding-left: clamp(16px, 4vw, 56px);
+  padding-right: clamp(16px, 4vw, 56px);
+}
+
+.nav__log {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* — inline "Log a night" form — */
+.log-night-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin: var(--space-3) 0;
+  border: 2px dashed var(--color-divider);
+  background: var(--color-surface);
+}
+
+.log-night-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 /* Banners: stale/error states are always visible, never a blank page. */
 .banner {
-  border-radius: 8px;
-  padding: 0.6rem 0.85rem;
-  font-size: 0.85rem;
-  margin: 0 0 1rem;
-}
-
-.banner--stale {
-  background: color-mix(in srgb, orange 15%, var(--bg));
-  border: 1px solid color-mix(in srgb, orange 40%, var(--border));
+  padding: 10px 14px;
+  font-size: 13px;
+  margin: var(--space-3) 0 0;
+  border: 1px solid var(--color-accent-300);
+  background: var(--color-accent-100);
+  color: var(--color-accent-800);
 }
 
 .banner--error {
-  background: color-mix(in srgb, #b00020 12%, var(--bg));
-  border: 1px solid color-mix(in srgb, #b00020 40%, var(--border));
-  color: #b00020;
+  border-color: var(--color-accent-500);
 }
 
-/* 14-night strip - the signature visual. Horizontally scrollable so it
-   works at ~390px without shrinking tap targets below a usable size. */
+/* — hero — */
+.hero {
+  padding: var(--space-6) 0 var(--space-3);
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.hero__top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: var(--space-4);
+}
+
+.hero__range-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: 6px;
+}
+
+.hero__range {
+  font: 600 12px var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.hero__arrive {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12px var(--font-body);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.hero__arrive-input {
+  width: auto;
+  min-height: 26px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.hero__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hero__heading {
+  margin: 0;
+  font-size: clamp(20px, 5vw, 32px);
+}
+
+.hero__night-accent {
+  color: var(--color-accent);
+}
+
+.hero__sub {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.hero__stats {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hero__stat {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.hero__stat--plan {
+  font-weight: 800;
+  color: var(--color-accent-700);
+}
+
+/* — 14-night strip: the signature visual — thin bars, no baked-in date
+   text; hovering/focusing/tapping a bar surfaces the date in the label
+   above instead. — */
+.night-strip-wrap {
+  margin-top: 2px;
+}
+
+.night-strip__tooltip {
+  font: 700 11px var(--font-heading);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  height: 14px;
+  margin-bottom: 4px;
+}
+
 .night-strip {
   display: flex;
-  gap: 0.4rem;
+  gap: 4px;
+  align-items: flex-end;
   overflow-x: auto;
-  padding: 0.25rem 0.1rem 0.6rem;
-  margin-bottom: 0.75rem;
-  scroll-snap-type: x proximity;
+  padding: 2px 2px var(--space-2);
   -webkit-overflow-scrolling: touch;
 }
 
-.night-cell {
+.night-bar {
   flex: 0 0 auto;
-  scroll-snap-align: start;
-  width: 46px;
-  height: 58px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.15rem;
-  font: inherit;
-  color: var(--text-h);
-  cursor: pointer;
   position: relative;
+  width: 10px;
+  height: 44px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
   padding: 0;
+  cursor: pointer;
+  overflow: hidden;
 }
 
-.night-cell:disabled {
-  cursor: default;
+.night-bar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--night-score, 0) * 100%);
+  background: color-mix(in srgb, var(--color-accent) calc(var(--night-score, 0) * 100%), var(--color-neutral-300));
 }
 
-.night-cell--empty {
+.night-bar--empty {
   border-style: dashed;
-  color: var(--text);
   opacity: 0.5;
 }
+.night-bar--empty::before {
+  content: none;
+}
 
-.night-cell--selected {
-  outline: 2px solid var(--accent);
+.night-bar--booked {
+  border-color: var(--color-text);
+}
+.night-bar--booked::before {
+  height: 100%;
+  background: var(--color-text);
+}
+
+.night-bar--selected {
+  outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
 
-.night-cell__day {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  opacity: 0.75;
+.night-bar:disabled {
+  cursor: default;
 }
 
-.night-cell__date {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.night-cell__conflict {
+.night-bar__conflict {
   position: absolute;
-  top: 2px;
-  right: 4px;
-  font-size: 0.6rem;
-  color: var(--accent);
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  color: var(--color-accent);
+  z-index: 1;
 }
 
-.night-detail-header {
+/* — sort row: visually the design's "Sort" control, but every pill maps to
+   an existing SQL-order-preserving filter, never a client-side re-sort — */
+.sort-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  margin-bottom: 0.75rem;
+  gap: 8px;
+  padding: var(--space-3) 0;
+  border-bottom: 2px solid var(--color-divider);
   flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: var(--space-3);
 }
 
-/* Filter chips - client-side filtering of the single already-fetched list. */
+.sort-row__label {
+  font: 800 11px var(--font-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  margin-right: 4px;
+}
+
+.sort-pill {
+  cursor: pointer;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font: 600 12px var(--font-body);
+  white-space: nowrap;
+}
+
+.sort-pill--active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.sort-row__tonight {
+  margin-left: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  font: 600 12px var(--font-body);
+}
+
+/* — filter chips: secondary refinement, styled as ink pills to sit below
+   the accent-colored sort pills — */
 .filter-chips {
   display: flex;
-  gap: 0.4rem;
+  gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .chip {
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-divider);
   background: transparent;
-  color: var(--text);
-  border-radius: 999px;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.78rem;
-  font: inherit;
+  color: var(--color-text);
+  font: 600 12px var(--font-body);
+  padding: 5px 12px;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .chip--active {
-  background: var(--accent-bg);
-  border-color: var(--accent-border);
-  color: var(--text-h);
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-bg);
 }
 
-.event-list {
+.conflict-flag {
+  font: 600 13px var(--font-body);
+  color: var(--color-accent-800);
+  background: var(--color-accent-100);
+  border: 1px solid var(--color-accent-300);
+  padding: 8px 12px;
+  margin: 0 0 var(--space-3);
+}
+
+/* — card grid — */
+/* Gap is plain (not the container-background hairline trick) because an
+   incomplete last row would otherwise leak the container's own background
+   through the empty trailing cells as a solid block. Every tier already
+   carries its own edge (rank-top/rest borders, rank-1's solid-color
+   contrast), so a shared hairline isn't needed for separation anyway. */
+.ev-grid {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 0 var(--space-6);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .ev-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-1);
+  }
+}
+
+.ev-card {
+  position: relative;
+  cursor: pointer;
+  padding: var(--space-3);
+}
+
+.ev-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.ev-card .card-kicker {
+  padding-right: 40px;
+}
+
+.ev-card__meta {
+  flex-wrap: wrap;
+}
+
+.ev-card__tags {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-/* Score high = visually loud, score low = visually quiet. --card-score
-   (0..1) is set inline per card in EventCard.tsx. */
-.event-card {
-  --card-score: 0.5;
-  border: 1px solid var(--border);
-  border-left: 4px solid color-mix(in srgb, var(--accent) calc(20% + var(--card-score) * 70%), transparent);
-  border-radius: 8px;
-  padding: 1rem;
-  background: color-mix(in srgb, var(--accent) calc(var(--card-score) * 10%), var(--bg));
-  text-align: left;
+.rank-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font: 800 11px var(--font-heading);
+  color: var(--color-neutral-600);
 }
 
-/* Paid/gated events are dimmed and flagged, never hidden - the score
-   already accounts for accessibility, hiding would double-penalize them. */
-.event-card--gated {
-  opacity: 0.72;
+/* Score high = visually loud, low = visually quiet - carried by discrete
+   rank tiers over the already SQL-sorted list, not a continuous fill. */
+.ev-card--rank-1 {
+  background: var(--color-accent);
+  color: #fff;
+}
+.ev-card--rank-1 .rank-badge,
+.ev-card--rank-1 .card-kicker {
+  color: rgba(255, 255, 255, 0.85);
+}
+.ev-card--rank-1 .card-title {
+  color: #fff;
+  font-size: 22px;
+}
+.ev-card--rank-1 .card-meta,
+.ev-card--rank-1 .text-muted {
+  color: rgba(255, 255, 255, 0.8);
+}
+@media (min-width: 640px) {
+  .ev-card--rank-1 {
+    grid-column: span 2;
+  }
 }
 
-.event-card__title {
-  text-decoration: none;
+.ev-card--rank-top {
+  border: 2px solid var(--color-accent-400);
+}
+.ev-card--rank-top .rank-badge,
+.ev-card--rank-top .card-kicker {
+  color: var(--color-accent-700);
+}
+
+.ev-card--rank-rest {
+  border: 2px solid var(--color-divider);
+  opacity: 0.78;
+}
+.ev-card--rank-rest .rank-badge,
+.ev-card--rank-rest .card-kicker {
+  color: var(--color-neutral-600);
+}
+
+.ev-card__attend {
+  border: 1px solid var(--color-divider);
+  background: transparent;
   color: inherit;
 }
+.ev-card__attend--active {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+.ev-card--rank-1 .ev-card__attend {
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+.ev-card--rank-1 .ev-card__attend--active {
+  background: #fff;
+  color: var(--color-accent);
+  border-color: #fff;
+}
 
-.event-card__title h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.05rem;
+/* — logged (self-authored) plan entries: dashed, no rank/score — personal
+   plan, not a ranked event. — */
+.ev-card--logged {
+  border: 2px dashed var(--color-divider);
+  cursor: default;
+}
+
+.ev-card__remove {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* — event detail modal — */
+.ev-modal {
+  position: relative;
   text-align: left;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
-.event-meta {
-  display: flex;
-  gap: 0.5rem;
+.ev-modal__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.ev-modal__meta {
   flex-wrap: wrap;
-  font-size: 0.8rem;
-  opacity: 0.85;
-  align-items: center;
-  margin-bottom: 0.6rem;
+  margin: 4px 0 2px;
 }
 
-.badge {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.1rem 0.5rem;
-  font-size: 0.72rem;
+.ev-modal__luma-link {
+  align-self: flex-start;
+  text-decoration: none;
 }
 
-.badge--free {
-  border-color: color-mix(in srgb, seagreen 50%, var(--border));
-  color: seagreen;
-}
-
-.badge--open {
-  border-color: var(--accent-border);
-}
-
-.badge--gated {
-  border-color: color-mix(in srgb, orange 50%, var(--border));
-  color: color-mix(in srgb, orange 70%, var(--text-h));
-}
-
-.badge--flag {
-  border-style: dashed;
-}
-
-/* Score breakdown bars - keyword/venue/accessibility only. There is no
-   host bar: no HostScorer exists in the Java pipeline. */
+/* — score breakdown bars — */
 .score-breakdown {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 4px;
+  margin: 2px 0;
 }
 
 .score-bar {
   display: grid;
-  grid-template-columns: 3.4rem 1fr;
+  grid-template-columns: 4.2rem 1fr 2rem;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.68rem;
-  opacity: 0.8;
+  gap: 8px;
+}
+
+.score-bar__label {
+  font: 600 10px var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
 }
 
 .score-bar__track {
-  height: 5px;
-  border-radius: 3px;
-  background: var(--border);
+  height: 6px;
+  background: var(--color-neutral-200);
   overflow: hidden;
 }
 
 .score-bar__fill {
   display: block;
   height: 100%;
-  background: var(--accent);
-  border-radius: 3px;
+  background: var(--color-accent);
+}
+
+.score-bar__value {
+  text-align: right;
+  font: 800 11px var(--font-heading);
 }
 
 /* Skeleton loading state - not a spinner. */
-.event-card--skeleton {
-  height: 92px;
+.ev-card--skeleton {
+  height: 130px;
   background: linear-gradient(
     90deg,
-    var(--border) 25%,
-    color-mix(in srgb, var(--border) 50%, var(--bg)) 37%,
-    var(--border) 63%
+    var(--color-divider) 25%,
+    color-mix(in srgb, var(--color-divider) 50%, var(--color-bg)) 37%,
+    var(--color-divider) 63%
   );
   background-size: 400% 100%;
   animation: skeleton-pulse 1.4s ease infinite;
@@ -257,11 +510,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .event-card--skeleton {
+  .ev-card--skeleton {
     animation: none;
   }
-}
-
-.error {
-  color: #b00020;
 }
