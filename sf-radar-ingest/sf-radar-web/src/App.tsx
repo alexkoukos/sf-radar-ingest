@@ -60,6 +60,7 @@ function App() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [newcomerFriendlyOnly, setNewcomerFriendlyOnly] = useState(false);
   const [freeAndOpenOnly, setFreeAndOpenOnly] = useState(false);
+  const [myPlanOnly, setMyPlanOnly] = useState(false);
   const [plan, setPlan] = useState<LocalPlan>({ attending: {}, logged: [] });
   const [startDateStr, setStartDateStr] = useState<string | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
@@ -151,8 +152,9 @@ function App() {
     if (activeCategory) list = list.filter((e) => e.category === activeCategory);
     if (newcomerFriendlyOnly) list = list.filter(isNewcomerFriendly);
     if (freeAndOpenOnly) list = list.filter(isFreeAndOpen);
+    if (myPlanOnly) list = list.filter((e) => plan.attending[e.api_id]);
     return list;
-  }, [windowEvents, eventsByNight, selectedNight, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly]);
+  }, [windowEvents, eventsByNight, selectedNight, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly, plan]);
 
   const selectedNightConflictCount = useMemo(() => {
     if (selectedNight === null) return 0;
@@ -265,7 +267,7 @@ function App() {
   return (
     <main className="dashboard">
       <nav className="nav">
-        <span className="nav-brand">SIGNAL</span>
+        <span className="nav-brand">SF RADAR</span>
         <button
           type="button"
           className="btn btn-primary nav__log"
@@ -386,6 +388,8 @@ function App() {
           }}
           tonightOnly={selectedNight === startOffset}
           onToggleTonight={() => setSelectedNight((prev) => (prev === startOffset ? null : startOffset))}
+          myPlanOnly={myPlanOnly}
+          onToggleMyPlan={() => setMyPlanOnly((v) => !v)}
         />
       )}
 
