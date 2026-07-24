@@ -255,11 +255,11 @@
   color: #fff;
 }
 
-.sort-row__tonight {
+.sort-row__right {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
   margin-left: auto;
-  white-space: nowrap;
-  cursor: pointer;
-  font: 600 12px var(--font-body);
 }
 
 /* — filter chips: secondary refinement, styled as ink pills to sit below
