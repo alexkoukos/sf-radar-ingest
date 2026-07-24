@@ -65,7 +65,7 @@ function EventModal({ event, onClose }: EventModalProps) {
         <h2 className="dialog-title">{event.name}</h2>
 
         <div className="card-meta ev-modal__meta">
-          {event.starts_at && <span>{ptTimeFormatter.format(new Date(event.starts_at))} PT</span>}
+          {event.starts_at && <span>{ptTimeFormatter.format(new Date(event.starts_at))} PDT</span>}
           {event.host_name && <span>{event.host_name}</span>}
           {location && <span>{location}</span>}
         </div>
