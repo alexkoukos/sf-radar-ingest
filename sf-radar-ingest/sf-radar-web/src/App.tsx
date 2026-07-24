@@ -137,7 +137,11 @@ function App() {
   }, [events, wideNights]);
 
   const windowEvents = useMemo(() => {
-    if (!windowNights) return [];
+    // No boundaries (e.g. la_window_start() failed and we're on cached
+    // events only) means we can't slice by window - show everything cached
+    // rather than nothing, so a dead network degrades to stale data, not a
+    // blank page.
+    if (!windowNights) return events;
     const idxSet = new Set(windowNights.map((n) => n.index));
     return events.filter((e) => idxSet.has(e.starts_at ? (nightIndexFor(e.starts_at, wideNights!) ?? -1) : -1));
   }, [events, windowNights, wideNights]);
@@ -349,7 +353,7 @@ function App() {
             </div>
           </div>
           <div className="hero__stats">
-            {events.length > 0 && (
+            {windowNights && events.length > 0 && (
               <div className="hero__stat">
                 {nightsWithEvents} of {WINDOW_DAYS} nights have events
               </div>
