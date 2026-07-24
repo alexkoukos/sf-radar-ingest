@@ -1,3 +1,4 @@
+import { useState, type CSSProperties } from "react";
 import type { DashboardEvent } from "../types";
 import type { Night } from "../lib/timeBoundaries";
 
@@ -7,6 +8,7 @@ const dayFormatter = new Intl.DateTimeFormat("en-US", {
 });
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Los_Angeles",
+  month: "short",
   day: "numeric",
 });
 
@@ -17,6 +19,7 @@ interface NightStripProps {
   eventsByNight: Map<number, DashboardEvent[]>;
   selected: number | null;
   onSelect: (index: number | null) => void;
+  bookedNights: Set<number>;
 }
 
 function bestScore(events: DashboardEvent[] | undefined): number | null {
@@ -30,43 +33,60 @@ function strongCount(events: DashboardEvent[] | undefined): number {
 }
 
 /**
- * The signature visual: one cell per evening, colored by that night's best
- * score. Empty nights stay visibly hollow rather than looking broken.
- * Clicking a night filters the list below to it; clicking it again (or the
- * "Your Stay" pill) clears the filter back to the full window.
+ * The signature visual: one thin bar per evening, fill height (or a solid
+ * "booked" fill) standing in for that night's best score. No date text is
+ * baked into the bars themselves - hovering (desktop) or focusing/tapping
+ * (mobile) surfaces the date in the label above instead. Clicking a night
+ * filters the list below to it; clicking it again clears back to the full
+ * window.
  */
-function NightStrip({ nights, eventsByNight, selected, onSelect }: NightStripProps) {
-  return (
-    <div className="night-strip" role="tablist" aria-label="Nights of your stay">
-      {nights.map((night) => {
-        const events = eventsByNight.get(night.index);
-        const score = bestScore(events);
-        const conflicts = strongCount(events) >= 2;
-        const isEmpty = score === null;
-        const isSelected = selected === night.index;
+function NightStrip({ nights, eventsByNight, selected, onSelect, bookedNights }: NightStripProps) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-        return (
-          <button
-            key={night.index}
-            type="button"
-            role="tab"
-            aria-selected={isSelected}
-            className={`night-cell${isEmpty ? " night-cell--empty" : ""}${isSelected ? " night-cell--selected" : ""}`}
-            style={isEmpty ? undefined : { backgroundColor: `rgba(170, 59, 255, ${0.18 + score! * 0.7})` }}
-            onClick={() => onSelect(isSelected ? null : night.index)}
-            disabled={isEmpty}
-            title={isEmpty ? "No events this evening" : `Best score ${score!.toFixed(2)}`}
-          >
-            <span className="night-cell__day">{dayFormatter.format(night.start)}</span>
-            <span className="night-cell__date">{dateFormatter.format(night.start)}</span>
-            {conflicts && (
-              <span className="night-cell__conflict" aria-label="Multiple strong picks tonight">
-                ✦
-              </span>
-            )}
-          </button>
-        );
-      })}
+  const labelIndex = hoverIndex ?? selected;
+  const labelNight = labelIndex !== null ? nights.find((n) => n.index === labelIndex) : undefined;
+
+  return (
+    <div className="night-strip-wrap">
+      <div className="night-strip__tooltip" aria-hidden="true">
+        {labelNight ? `${dayFormatter.format(labelNight.start)} ${dateFormatter.format(labelNight.start)}` : " "}
+      </div>
+      <div className="night-strip" role="tablist" aria-label="Nights of your stay">
+        {nights.map((night) => {
+          const events = eventsByNight.get(night.index);
+          const score = bestScore(events);
+          const conflicts = strongCount(events) >= 2;
+          const isBooked = bookedNights.has(night.index);
+          const isEmpty = score === null && !isBooked;
+          const isSelected = selected === night.index;
+          const dateLabel = `${dayFormatter.format(night.start)} ${dateFormatter.format(night.start)}`;
+          const statusLabel = isBooked ? "booked" : isEmpty ? "no events" : `best score ${score!.toFixed(2)}`;
+
+          return (
+            <button
+              key={night.index}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              aria-label={`${dateLabel} — ${statusLabel}`}
+              className={`night-bar${isEmpty ? " night-bar--empty" : ""}${isSelected ? " night-bar--selected" : ""}${isBooked ? " night-bar--booked" : ""}`}
+              style={!isEmpty && !isBooked ? ({ "--night-score": score } as CSSProperties) : undefined}
+              onClick={() => onSelect(isSelected ? null : night.index)}
+              onMouseEnter={() => setHoverIndex(night.index)}
+              onMouseLeave={() => setHoverIndex(null)}
+              onFocus={() => setHoverIndex(night.index)}
+              onBlur={() => setHoverIndex(null)}
+              disabled={isEmpty}
+            >
+              {conflicts && (
+                <span className="night-bar__conflict" aria-hidden="true">
+                  ✦
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

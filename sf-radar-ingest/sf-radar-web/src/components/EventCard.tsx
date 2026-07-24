@@ -1,96 +1,74 @@
-import type { CSSProperties } from "react";
 import type { DashboardEvent } from "../types";
-import { scoreBreakdown } from "../lib/scoreBreakdown";
-
-const timeFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZone: "America/Los_Angeles",
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
-
-const BREAKDOWN_BARS: Array<{ key: "keyword" | "venue" | "accessibility"; label: string }> = [
-  { key: "keyword", label: "Keyword" },
-  { key: "venue", label: "Venue" },
-  { key: "accessibility", label: "Access" },
-];
-
-function formatPrice(event: DashboardEvent): string {
-  if (event.is_free === true) return "Free";
-  if (event.is_free === false) {
-    return event.price_cents != null ? `$${(event.price_cents / 100).toFixed(0)}` : "Paid";
-  }
-  return "Price unknown";
-}
-
-function rsvpLabel(rsvpType: string): string {
-  switch (rsvpType) {
-    case "OPEN":
-      return "Open RSVP";
-    case "WAITLIST":
-      return "Waitlist";
-    case "APPLICATION":
-      return "Application";
-    case "INVITE_ONLY":
-      return "Invite only";
-    case "MEMBERS_ONLY":
-      return "Members only";
-    default:
-      return "RSVP unknown";
-  }
-}
+import { CATEGORY_LABELS } from "../lib/categoryLabels";
+import { formatPrice, isGated, ptTimeFormatter, rsvpLabel, venueLabel } from "../lib/eventFormat";
 
 interface EventCardProps {
   event: DashboardEvent;
+  rank: number;
+  attending: boolean;
+  onToggleAttend: (apiId: string) => void;
+  onSelect: (event: DashboardEvent) => void;
+}
+
+/** Rank is a display index into an already SQL-sorted list, never a re-sort. */
+function tierClass(rank: number): string {
+  if (rank === 1) return "ev-card--rank-1";
+  if (rank <= 3) return "ev-card--rank-top";
+  return "ev-card--rank-rest";
+}
+
+function formatRank(rank: number): string {
+  return rank < 10 ? `0${rank}` : String(rank);
 }
 
 /**
- * Score high = visually loud, score low = visually quiet: the card's
- * emphasis (border/background intensity) scales continuously with
- * `--card-score`, set here and consumed by App.css. Paid/gated events are
- * dimmed and flagged, never hidden - the ranking already accounts for
- * accessibility, hiding would double-penalize them.
+ * Score high = visually loud, score low = visually quiet - carried here by
+ * discrete rank tiers (1 / top-3 / rest) rather than a continuous fill,
+ * since the Modernist card grid ranks by position, not by a score-driven
+ * gradient. Paid/gated events are flagged, never hidden.
  */
-function EventCard({ event }: EventCardProps) {
-  const breakdown = scoreBreakdown(event);
-  const gated = event.rsvp_type === "INVITE_ONLY" || event.rsvp_type === "MEMBERS_ONLY";
+function EventCard({ event, rank, attending, onToggleAttend, onSelect }: EventCardProps) {
+  const gated = isGated(event);
   const score = event.score ?? 0;
 
   return (
     <li
-      className={`event-card${gated ? " event-card--gated" : ""}`}
-      style={{ "--card-score": score } as CSSProperties}
+      className={`card ev-card ${tierClass(rank)}`}
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(event)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(event);
+        }
+      }}
     >
-      <a
-        className="event-card__title"
-        href={event.url_slug ? `https://luma.com/${event.url_slug}` : undefined}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <h2>{event.name}</h2>
-      </a>
-
-      <div className="event-meta">
-        {event.starts_at && <span>{timeFormatter.format(new Date(event.starts_at))} PT</span>}
+      <span className="rank-badge">#{formatRank(rank)}</span>
+      <div className="card-kicker">
+        {CATEGORY_LABELS[event.category] ?? event.category} &middot; Score {Math.round(score * 100)}
+      </div>
+      <div className="card-title ev-card__title">{event.name}</div>
+      <div className="card-meta ev-card__meta">
+        {event.starts_at && <span>{ptTimeFormatter.format(new Date(event.starts_at))} PT</span>}
+        <span>{venueLabel(event)}</span>
         {event.host_name && <span>{event.host_name}</span>}
-        {event.sublocality && <span>{event.sublocality}</span>}
-        <span className={event.is_free ? "badge badge--free" : "badge"}>{formatPrice(event)}</span>
-        <span className={gated ? "badge badge--gated" : "badge badge--open"}>{rsvpLabel(event.rsvp_type)}</span>
-        {gated && <span className="badge badge--flag">Harder to get into</span>}
       </div>
-
-      <div className="score-breakdown" aria-label="Why this ranked here">
-        {BREAKDOWN_BARS.map(({ key, label }) => (
-          <div className="score-bar" key={key}>
-            <span className="score-bar__label">{label}</span>
-            <span className="score-bar__track">
-              <span className="score-bar__fill" style={{ width: `${breakdown[key] * 100}%` }} />
-            </span>
-          </div>
-        ))}
+      <div className="ev-card__tags">
+        <span className={event.is_free ? "tag tag-accent" : "tag tag-neutral"}>{formatPrice(event)}</span>
+        <span className={gated ? "tag tag-neutral" : "tag tag-accent-2"}>{rsvpLabel(event.rsvp_type)}</span>
+        {gated && <span className="tag tag-outline">Harder to get into</span>}
       </div>
+      <button
+        type="button"
+        className={`btn btn-block ev-card__attend${attending ? " ev-card__attend--active" : ""}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleAttend(event.api_id);
+        }}
+      >
+        {attending ? "Attending ✓" : "Attend"}
+      </button>
     </li>
   );
 }
