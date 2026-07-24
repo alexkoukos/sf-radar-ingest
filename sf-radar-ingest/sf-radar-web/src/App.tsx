@@ -17,6 +17,7 @@ import EventCard from "./components/EventCard";
 import EventModal from "./components/EventModal";
 import FilterChips from "./components/FilterChips";
 import SortRow, { type SortMode } from "./components/SortRow";
+import ViewToggle from "./components/ViewToggle";
 import LogNightForm from "./components/LogNightForm";
 import LoggedNightCard from "./components/LoggedNightCard";
 import "./App.css";
@@ -274,6 +275,25 @@ function App() {
     });
   }
 
+  // My Plan and Tonight Only are two "view" toggles that can each be
+  // independently on/off but never simultaneously on - clicking one that's
+  // about to turn on deactivates the other if it was active. Neither-active
+  // remains a valid (and default) state.
+  function toggleMyPlanOnly() {
+    if (!myPlanOnly && selectedNight === startOffset) {
+      setSelectedNight(null);
+    }
+    setMyPlanOnly((v) => !v);
+  }
+
+  function toggleTonightOnly() {
+    const isActive = selectedNight === startOffset;
+    if (!isActive && myPlanOnly) {
+      setMyPlanOnly(false);
+    }
+    setSelectedNight(isActive ? null : startOffset);
+  }
+
   const showSkeleton = loading && events.length === 0;
   const nightsPlannedCount = bookedNightIndices.size;
 
@@ -391,18 +411,19 @@ function App() {
             setActiveCategory(null);
             setFreeAndOpenOnly(false);
           }}
-          onFree={() => {
-            setFreeAndOpenOnly(true);
-            setActiveCategory(null);
-          }}
           onInvestor={() => {
             setActiveCategory("INVESTOR_MEETUP");
             setFreeAndOpenOnly(false);
           }}
-          tonightOnly={selectedNight === startOffset}
-          onToggleTonight={() => setSelectedNight((prev) => (prev === startOffset ? null : startOffset))}
+        />
+      )}
+
+      {events.length > 0 && (
+        <ViewToggle
           myPlanOnly={myPlanOnly}
-          onToggleMyPlan={() => setMyPlanOnly((v) => !v)}
+          onToggleMyPlan={toggleMyPlanOnly}
+          tonightOnly={selectedNight === startOffset}
+          onToggleTonight={toggleTonightOnly}
         />
       )}
 
