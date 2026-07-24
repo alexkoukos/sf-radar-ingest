@@ -459,6 +459,8 @@ function App() {
       </ul>
 
       <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+
+      <footer className="app-footer">Built by Alex Koukos for the HH community ❤️</footer>
     </main>
   );
 }
