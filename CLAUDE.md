@@ -20,7 +20,7 @@ No mock, synthetic, or hand-authored event data anywhere in production. Real dat
 Data source is Luma's embedded page JSON (Next.js streamed self.__next_f.push(...) chunks on luma.com/sf and calendar pages) — NOT the ICS feed (no discoverable unauthenticated URL) and NOT the official API (paid, per-calendar, wrong scope).
 Recorded fixtures (frozen real HTTP responses) are allowed only in src/test/resources/, for parser tests. Never reachable from production code.
 No ingestion-time keyword gate. Keyword matching is a scoring input only (KeywordScorer), never a filter that discards events. Source curation (which calendars are scraped) is the relevance filter.
-Timezone: all date/window logic is anchored to America/Los_Angeles inside Postgres (la_window_start()), never UTC, never JVM default, never browser locale. All timestamps rendered client-side with explicit Intl.DateTimeFormat(..., { timeZone: 'America/Los_Angeles' }) + a visible "PT" label. Dev machine is in Athens — historically the most likely silent-bug source.
+Timezone: all date/window logic is anchored to America/Los_Angeles inside Postgres (la_window_start()), never UTC, never JVM default, never browser locale. All timestamps rendered client-side with explicit Intl.DateTimeFormat(..., { timeZone: 'America/Los_Angeles' }) + a visible "PDT" label. Dev machine is in Athens — historically the most likely silent-bug source.
 Dedupe key: Luma's own global event id (source_event_id), not scoped per scrape-target — the same event found via two different pages must collapse to one row. discovered_via is observability only, unioned across runs, never part of the dedupe key.
 Ghost events: never hard-deleted. last_seen_at + a 24-hour grace window in get_dashboard_events lets transient single-target failures self-heal while genuinely cancelled events still clear.
 Run-level failure is a total-failure gate only (zero events across all targets, or a structural shape-match break). A single target 502-ing is logged per-target in ingestion_runs.source_summary and does NOT fail the run or touch the DB. Fail-loud persistence: any total failure skips the upsert entirely — events table is provably untouched, last good snapshot stays live.
@@ -45,7 +45,7 @@ Auth, accounts, saved events, notifications.
 Any change to Java, schema.sql, or workflows — that layer is finished and verified; don't reopen it. (Scoring weights live directly in the Java scorer classes - KeywordScorer, VenueScorer, AccessibilityScorer, EventScorer - there is no separate scoring-weights.json file.)
 New data-fetching patterns beyond the existing RPC + chips.
 Design direction
-The ranked list is the hero. Density over decoration: an event card must communicate title, time (PT), host, price/free, RSVP openness, and score at a glance without tapping.
+The ranked list is the hero. Density over decoration: an event card must communicate title, time (PDT), host, price/free, RSVP openness, and score at a glance without tapping.
 Score high = visually loud, score low = visually quiet. Free + open events should look inviting (that's the thesis); invite-only/paid events render dimmed or flagged, never hidden.
 Dark-mode-first is fine, but verify contrast on a real phone in daylight — the demo is a phone handed across a table.
 Motion: subtle or none. Nothing that can jank on mid-range mobile.
@@ -56,7 +56,7 @@ No program name, no logo, anywhere in UI or README — the pitch is general usef
 Ranking is never hand-curated or staged. Tune weights, then narrate whatever real data actually produces — including an awkward result.
 Gift to the founders is the URL only — no repo handover, no transferred ownership. Maintenance is on the user indefinitely.
 Verification before Sunday freeze
-Open the deployed Vercel URL (not localhost) on a real phone: all views render, chips work, times show PT, strip is tappable.
+Open the deployed Vercel URL (not localhost) on a real phone: all views render, chips work, times show PDT, strip is tappable.
 Quick performance pass — first paint must feel instant on mobile; the demo moment is someone opening a link cold.
 grep the built dist/ bundle: no service-role credential, no connection string.
 Deliberately kill the network mid-session: UI degrades to cached/last data + banner, not a crash.

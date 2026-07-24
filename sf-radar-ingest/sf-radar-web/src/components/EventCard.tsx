@@ -50,7 +50,7 @@ function EventCard({ event, rank, attending, onToggleAttend, onSelect }: EventCa
       </div>
       <div className="card-title ev-card__title">{event.name}</div>
       <div className="card-meta ev-card__meta">
-        {event.starts_at && <span>{ptTimeFormatter.format(new Date(event.starts_at))} PT</span>}
+        {event.starts_at && <span>{ptTimeFormatter.format(new Date(event.starts_at))} PDT</span>}
         <span>{venueLabel(event)}</span>
         {event.host_name && <span>{event.host_name}</span>}
       </div>
