@@ -39,6 +39,15 @@ const nightHeadingFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
 });
+// Explicit PT, never the viewer's browser locale - the dev machine being in
+// Athens is exactly why this class of bug hides from local testing.
+const staleTimestampFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 function errorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
@@ -292,7 +301,7 @@ function App() {
 
       {staleSince && (
         <p className="banner banner--stale">
-          Showing data from {new Date(staleSince).toLocaleString()} - couldn't refresh
+          Showing data from {staleTimestampFormatter.format(new Date(staleSince))} PT - couldn't refresh
           {error ? `: ${error}` : "."}
         </p>
       )}
