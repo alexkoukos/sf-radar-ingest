@@ -13,8 +13,23 @@
   min-height: 100svh;
   display: flex;
   flex-direction: column;
+  /* A column flexbox gives its children min-width:auto, so a single wide
+     descendant (a long unbroken event title, a nowrap control) can blow the
+     whole page out horizontally. Pin it to 0 and the overflow stays inside
+     whichever scroll container owns it. */
+  min-width: 0;
 }
 
 body {
   margin: 0;
+}
+
+/* Backstop: nothing is allowed to introduce a horizontal page scrollbar.
+   The real fixes are min-width:0 on the flex chain + overflow-wrap on text
+   below; this just guarantees the symptom can never reappear from some
+   state we didn't foresee. Internal scrollers (.sort-row, .filter-chips,
+   .night-strip) keep their own overflow-x and are unaffected. */
+html,
+body {
+  overflow-x: hidden;
 }

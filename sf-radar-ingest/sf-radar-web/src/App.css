@@ -11,6 +11,8 @@
   padding: 0 clamp(16px, 4vw, 56px) var(--space-8);
   text-align: left;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .nav {
@@ -347,11 +349,15 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-3);
+  min-width: 0;
 }
 
 @media (min-width: 640px) {
   .ev-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* min(100%, 300px) instead of a bare 300px: on a viewport narrower than
+       one 300px track (small phones, split-screen) the column collapses to
+       the available width instead of forcing a horizontal scrollbar. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
     gap: var(--space-1);
   }
 }
@@ -360,6 +366,17 @@
   position: relative;
   cursor: pointer;
   padding: var(--space-3);
+  /* Grid/flex children default to min-width:auto; a long unbroken word in a
+     title would otherwise stretch the track past the viewport. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.card-title,
+.ev-card__meta,
+.ev-card__title {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .ev-card:focus-visible {
@@ -562,15 +579,60 @@
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
 }
 
-/* — plan actions: ICS export, timezone mode, name — */
+/* — plan actions: ICS export, share link, timezone mode, name —
+   A <details> panel that lives BELOW the ranked list: you plan first,
+   export/share after. Collapsed by default so it never competes with the
+   list for attention. */
 .plan-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin: var(--space-3) 0 0;
-  padding: var(--space-3);
+  margin: var(--space-6) 0 var(--space-4);
   border: 2px solid var(--color-divider);
   background: var(--color-surface);
+}
+
+.plan-actions__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  cursor: pointer;
+  list-style: none;
+  font: 800 13px var(--font-heading);
+  letter-spacing: 0.02em;
+}
+.plan-actions__summary::-webkit-details-marker {
+  display: none;
+}
+/* Chevron built from a bare span so it can rotate on open. */
+.plan-actions__summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid var(--color-text);
+  border-bottom: 2px solid var(--color-text);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+.plan-actions[open] .plan-actions__summary::after {
+  transform: rotate(225deg);
+}
+.plan-actions__summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.plan-actions__summary-count {
+  font: 600 11px var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.plan-actions__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 var(--space-3) var(--space-3);
 }
 
 .plan-actions__row {
@@ -578,6 +640,22 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.plan-actions__share {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.plan-actions__share-lead {
+  margin: 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+.plan-actions__share-error {
+  margin: 0;
 }
 
 .tz-toggle {
@@ -607,7 +685,13 @@
   cursor: pointer;
 }
 
-.tz-toggle__opt input {
+/* The raw <input type="radio"> renders blue on every platform and fights
+   the red/black/white palette, so each option is marked up with the
+   Modernist .radio pattern: the real input is visually hidden (see
+   `.radio input` in modernist.css) and a drawn `.dot` ring stands in,
+   turning solid accent when checked. Here we only nudge that dot to sit on
+   the first text line of a multi-line label. */
+.tz-toggle__opt .dot {
   margin-top: 2px;
 }
 
@@ -713,4 +797,52 @@
   align-self: flex-start;
   text-decoration: none;
   margin-top: auto;
+}
+
+/* — subscribe panel: the /plan/<slug> share link + live calendar-feed URLs,
+   shown inside the collapsed plan-actions panel once a link is created. One
+   row per URL: label, read-only field, copy button; every row wraps on a
+   narrow viewport so nothing forces a horizontal scrollbar. */
+.subscribe-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 2px dashed var(--color-divider);
+  background: var(--color-bg);
+}
+
+.sub-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.sub-row__label {
+  flex: 0 0 5.5rem;
+  font: 800 10px var(--font-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.sub-row__url {
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 12px;
+  font-family: var(--font-body);
+}
+
+.sub-row__copy,
+.sub-row__google {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.subscribe-panel__note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
 }

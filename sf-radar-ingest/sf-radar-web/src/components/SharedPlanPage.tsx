@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import type { SharedLoggedNight, SharedPlan, SharedEventSnapshot } from "../lib/sharedPlan";
-import { fetchSharedPlan } from "../lib/sharedPlan";
+import type { Plan, PlanLoggedNight, PlanEventSnapshot } from "../lib/plan";
+import { fetchPlan } from "../lib/plan";
 import { downloadPlanIcs } from "../lib/icsDownload";
 import { possessivePhrase } from "../lib/possessive";
 import { laDateString } from "../lib/timeBoundaries";
@@ -27,11 +27,11 @@ const createdFormatter = new Intl.DateTimeFormat("en-US", {
 
 interface NightGroup {
   date: string;
-  events: SharedEventSnapshot[];
-  logged: SharedLoggedNight[];
+  events: PlanEventSnapshot[];
+  logged: PlanLoggedNight[];
 }
 
-function groupByNight(plan: SharedPlan): NightGroup[] {
+function groupByNight(plan: Plan): NightGroup[] {
   const byDate = new Map<string, NightGroup>();
   const ensure = (date: string) => {
     let group = byDate.get(date);
@@ -58,7 +58,7 @@ function groupByNight(plan: SharedPlan): NightGroup[] {
 }
 
 function SharedPlanPage({ slug }: { slug: string }) {
-  const [plan, setPlan] = useState<SharedPlan | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +80,7 @@ function SharedPlanPage({ slug }: { slug: string }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchSharedPlan(slug)
+    fetchPlan(slug)
       .then((result) => {
         if (cancelled) return;
         if (!result) {
@@ -138,7 +138,8 @@ function SharedPlanPage({ slug }: { slug: string }) {
         <h1 className="hero__heading">Someone's SF nights</h1>
         <p className="shared-plan__sub text-muted">
           A read-only snapshot of the events on this plan
-          {plan ? `, shared ${createdFormatter.format(new Date(plan.created_at))}` : ""}. Not editable here.
+          {plan?.created_at ? `, shared ${createdFormatter.format(new Date(plan.created_at))}` : ""}. Not
+          editable here.
         </p>
         {eventCount > 0 && (
           <div className="plan-actions">
