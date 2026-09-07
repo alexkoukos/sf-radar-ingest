@@ -2,6 +2,7 @@ package com.sfradar.ingest.source.embedded;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sfradar.ingest.source.RawEvent;
+import com.sfradar.ingest.util.Log;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -65,6 +66,10 @@ public final class EventShapeMatcher {
         String urlSlug = textOrThrow(event, "url", "event.url");
         Instant startsAt = instantOrThrow(event, "start_at", "event.start_at");
         Instant endsAt = instantOrNull(event, "end_at");
+        if (endsAt == null && event.hasNonNull("end_at")) {
+            Log.warn("event '" + name + "' (" + apiId + ", via " + discoveredVia + "): end_at present but "
+                + "unparseable ('" + textOrNull(event, "end_at") + "') - keeping the event with a null end time");
+        }
         boolean isOnline = "online".equals(textOrNull(event, "location_type"));
 
         JsonNode geo = event.get("geo_address_info");
