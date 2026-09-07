@@ -2,7 +2,7 @@ import { useEffect, type CSSProperties } from "react";
 import type { DashboardEvent } from "../types";
 import { scoreBreakdown } from "../lib/scoreBreakdown";
 import { CATEGORY_LABELS } from "../lib/categoryLabels";
-import { formatPrice, isGated, locationLine, ptTimeFormatter, rsvpLabel } from "../lib/eventFormat";
+import { formatPrice, isGated, locationLine, ptStamp, rsvpLabel } from "../lib/eventFormat";
 
 const BREAKDOWN_BARS: Array<{ key: "keyword" | "venue" | "accessibility"; label: string }> = [
   { key: "keyword", label: "Keyword" },
@@ -65,7 +65,7 @@ function EventModal({ event, onClose }: EventModalProps) {
         <h2 className="dialog-title">{event.name}</h2>
 
         <div className="card-meta ev-modal__meta">
-          {event.starts_at && <span>{ptTimeFormatter.format(new Date(event.starts_at))} PDT</span>}
+          {event.starts_at && <span>{ptStamp(new Date(event.starts_at))}</span>}
           {event.host_name && <span>{event.host_name}</span>}
           {location && <span>{location}</span>}
         </div>

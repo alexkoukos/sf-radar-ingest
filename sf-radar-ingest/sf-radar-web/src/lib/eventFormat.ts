@@ -1,4 +1,4 @@
-import type { DashboardEvent } from "../types";
+import type { EventLike } from "../types";
 
 export const ptTimeFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Los_Angeles",
@@ -9,7 +9,28 @@ export const ptTimeFormatter = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
-export function formatPrice(event: DashboardEvent): string {
+const laZoneNameFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  timeZoneName: "short",
+});
+
+/**
+ * "PDT" or "PST" for a given instant - correct on both sides of the DST
+ * boundary, so a November night in the window isn't mislabelled. Trip times
+ * are always shown in America/Los_Angeles regardless of the viewer's zone;
+ * this suffix makes that explicit.
+ */
+export function laZoneAbbrev(date: Date): string {
+  const part = laZoneNameFormatter.formatToParts(date).find((p) => p.type === "timeZoneName");
+  return part?.value ?? "PT";
+}
+
+/** "Wed, Sep 17, 5:00 PM PDT" - the canonical trip-time stamp. */
+export function ptStamp(date: Date): string {
+  return `${ptTimeFormatter.format(date)} ${laZoneAbbrev(date)}`;
+}
+
+export function formatPrice(event: EventLike): string {
   if (event.is_free === true) return "Free";
   if (event.is_free === false) {
     return event.price_cents != null ? `$${(event.price_cents / 100).toFixed(0)}` : "Paid";
@@ -34,18 +55,18 @@ export function rsvpLabel(rsvpType: string): string {
   }
 }
 
-export function isGated(event: DashboardEvent): boolean {
+export function isGated(event: EventLike): boolean {
   return event.rsvp_type === "INVITE_ONLY" || event.rsvp_type === "MEMBERS_ONLY";
 }
 
 /** Short venue label for the card meta line - falls back gracefully, never fabricates a name. */
-export function venueLabel(event: DashboardEvent): string {
+export function venueLabel(event: EventLike): string {
   if (event.is_online) return "Online";
   return event.sublocality || event.city || "Venue TBA";
 }
 
 /** Fuller location line (sublocality, city, region) for the detail modal. */
-export function locationLine(event: DashboardEvent): string | null {
+export function locationLine(event: EventLike): string | null {
   if (event.is_online) return "Online";
   const parts = [event.sublocality, event.city, event.region].filter(
     (part): part is string => Boolean(part?.trim()),
