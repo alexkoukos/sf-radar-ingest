@@ -19,9 +19,9 @@ const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_
 const SLUG_RE = /^[A-Za-z0-9_-]{16,64}$/;
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  res.setHeader("X-Robots-Tag", "noindex, nofollow");
-
   try {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+
     const rawSlug = Array.isArray(req.query.slug) ? req.query.slug[0] : (req.query.slug ?? "");
     const slug = String(rawSlug).replace(/\.ics$/i, "");
 
@@ -68,8 +68,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // pretending the feed is fresher than Google's own ~8-24h refresh.
     res.setHeader("Cache-Control", "public, max-age=900, s-maxage=900");
     res.send(result.body);
-  } catch {
-    sendText(res, 500, "Feed error.");
+  } catch (err) {
+    console.error("feed handler failed:", err);
+    try {
+      sendText(res, 500, "Feed error.");
+    } catch {
+      /* response already dispatched */
+    }
   }
 }
 
