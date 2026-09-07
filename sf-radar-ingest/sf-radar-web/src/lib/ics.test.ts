@@ -155,3 +155,35 @@ describe("buildPlanIcs - tzMode=floating", () => {
     expect(local.toString()).toBe("2026-09-08T17:00:00");
   });
 });
+
+describe("buildPlanIcs - content-line injection is neutralised", () => {
+  // A plan row's api_id / url_slug / name are attacker-controlled via a
+  // direct upsert_plan RPC call. A CRLF plus iCalendar keywords in any of
+  // them must NOT break out into new content lines / a forged VEVENT.
+  const EVIL: EventLike = {
+    ...REAL_EVENTS[0],
+    api_id:
+      "x\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:forged@evil\r\nSUMMARY:FORGED\r\nDTSTART:20260101T090000Z\r\nDTEND:20260101T100000Z",
+    url_slug: "ok\r\nATTENDEE:mailto:victim@example.com\r\nX-EVIL:1",
+    name: "Legit title\r\nSUMMARY:second summary",
+  };
+
+  for (const tzMode of ["tzid", "floating"] as const) {
+    it(`tzMode=${tzMode}: one poisoned event still yields exactly one VEVENT`, () => {
+      const ics = buildPlanIcs([EVIL], { tzMode }).value as string;
+      expect(() => parse(ics)).not.toThrow();
+
+      // No injected keyword broke out onto its own physical content line
+      // (continuation lines start with a space; standalone ones don't).
+      const lines = crlfLines(ics);
+      expect(lines.filter((l) => l === "BEGIN:VEVENT")).toHaveLength(1);
+      expect(lines.filter((l) => l === "END:VEVENT")).toHaveLength(1);
+      expect(lines.some((l) => l === "UID:forged@evil")).toBe(false);
+      expect(lines.some((l) => /^ATTENDEE[:;]/.test(l))).toBe(false);
+      expect(lines.some((l) => /^X-EVIL[:;]/.test(l))).toBe(false);
+
+      const vevents = parse(ics).getAllSubcomponents("vevent");
+      expect(vevents).toHaveLength(1);
+    });
+  }
+});

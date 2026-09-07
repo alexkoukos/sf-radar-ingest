@@ -135,7 +135,12 @@ function foldLine(input: string): string {
 }
 
 function prop(nameAndParams: string, value: string): string {
-  return foldLine(`${nameAndParams}:${value}`);
+  // Backstop against content-line injection: no property value may carry a
+  // bare CR/LF and forge a new line (a fake VEVENT, ATTENDEE, etc). TEXT
+  // values are already newline-escaped by escapeText; this also covers
+  // UID/URL/DTSTAMP and any future non-TEXT property.
+  const safe = value.replace(/[\r\n]+/g, " ");
+  return foldLine(`${nameAndParams}:${safe}`);
 }
 
 // Canonical America/Los_Angeles VTIMEZONE. The RRULEs are the current US
@@ -186,7 +191,10 @@ function toVevent(event: EventLike, dtstamp: string, tzMode: TzMode): string | n
 
   const rows = [
     "BEGIN:VEVENT",
-    prop("UID", `${event.api_id}@sf-radar`),
+    // api_id / url_slug are stored verbatim in the plan row and, via a
+    // direct upsert_plan RPC call, fully attacker-controlled - escape them
+    // exactly like the TEXT properties so a CRLF can't inject a forged event.
+    prop("UID", `${escapeText(event.api_id)}@sf-radar`),
     prop("DTSTAMP", dtstamp),
     dtProp("DTSTART", start, tzMode),
     dtProp("DTEND", end, tzMode),
@@ -194,7 +202,7 @@ function toVevent(event: EventLike, dtstamp: string, tzMode: TzMode): string | n
   ];
   if (location) rows.push(prop("LOCATION", escapeText(location)));
   rows.push(prop("DESCRIPTION", escapeText(descriptionParts.join("\n"))));
-  if (event.url_slug) rows.push(prop("URL", `https://luma.com/${event.url_slug}`));
+  if (event.url_slug) rows.push(prop("URL", escapeText(`https://luma.com/${event.url_slug}`)));
   rows.push("END:VEVENT");
   return rows.join("\r\n");
 }

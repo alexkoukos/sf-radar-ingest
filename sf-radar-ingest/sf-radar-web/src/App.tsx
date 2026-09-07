@@ -219,6 +219,16 @@ function App() {
     [events, plan.attending],
   );
 
+  // Self-logged nights resolved from night index to an LA calendar date -
+  // the shape a published plan row (and its calendar feed) stores.
+  const planLoggedNights = useMemo(() => {
+    if (!wideNights) return [];
+    return plan.logged.flatMap((l) => {
+      const night = wideNights.find((n) => n.index === l.nightIndex);
+      return night ? [{ date: laDateString(night.start), title: l.title, note: l.note }] : [];
+    });
+  }, [plan.logged, wideNights]);
+
   function nightLabelFor(nightIndex: number): string {
     const night = wideNights?.find((n) => n.index === nightIndex);
     return night ? nightHeadingFormatter.format(night.start) : "";
@@ -327,8 +337,6 @@ function App() {
           onCancel={() => setShowLogForm(false)}
         />
       )}
-
-      {attendingEvents.length > 0 && <PlanActions attendingEvents={attendingEvents} />}
 
       {staleSince && (
         <p className="banner banner--stale">
@@ -491,10 +499,18 @@ function App() {
         ))}
       </ul>
 
+      {attendingEvents.length > 0 && (
+        <PlanActions
+          attendingEvents={attendingEvents}
+          loggedNights={planLoggedNights}
+          startDate={startDateStr}
+        />
+      )}
+
       <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
 
       <footer className="app-footer">
-        Built by <a href="mailto:alex.koukos2006@gmail.com" className="app-footer__link">Alex Koukos</a> for the HH community ❤️
+        Built by <a href="mailto:alex.koukos2006@gmail.com" className="app-footer__link">Alex Koukos</a> ❤️
       </footer>
     </main>
   );
