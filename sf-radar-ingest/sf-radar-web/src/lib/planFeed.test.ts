@@ -1,6 +1,6 @@
 import ICAL from "ical.js";
 import { describe, expect, it } from "vitest";
-import { feedFilename, planFeedIcs } from "./planFeed";
+import { feedFilename, planFeedIcs } from "../../api/_lib/planFeed";
 
 // The exact shape get_plan returns since migration 004: a one-element array
 // (SETOF row) for a hit, [] for a miss. Frozen from the live RPC for the
