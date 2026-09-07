@@ -224,7 +224,13 @@ export function feedUrls(slug: string, origin?: string): FeedUrls {
   const base = origin ?? (typeof window !== "undefined" ? window.location.origin : "");
   const https = `${base}/feed/${slug}.ics`;
   const webcal = https.replace(/^https?:/i, "webcal:");
-  // Google's "add by URL" deep link. It wants an http(s) URL in `cid`.
-  const google = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(https)}`;
+  // Google Calendar "add by URL" deep link. The community-proven form is
+  // `calendar/render?cid=<webcal:// URL>` - the `webcal:` scheme is what makes
+  // Google treat `cid` as an external iCal feed to subscribe to (an `https:`
+  // URL there is ambiguous with a base64 Google-calendar id, and the `/r`
+  // SPA-router path doesn't reliably trigger the subscribe flow). Our feed
+  // URLs contain only query-safe characters, so the value is passed as-is,
+  // matching the known-working examples.
+  const google = `https://calendar.google.com/calendar/render?cid=${webcal}`;
   return { https, webcal, google, page: `${base}/plan/${slug}` };
 }
