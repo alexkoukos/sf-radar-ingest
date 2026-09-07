@@ -74,6 +74,17 @@ public final class PostgresEventStore {
         VALUES (?, ?, ?, ?::jsonb)
         """;
 
+    // Events whose start time is already two days in the past. These can never
+    // reappear in get_dashboard_events (it only returns starts_at >=
+    // la_window_start()), there is no historical/analytics view that reads
+    // them, and on the free tier they are just dead weight. This is NOT the
+    // ghost-event path: a still-upcoming event that stopped being seen is kept
+    // and aged out by the 24h last_seen_at grace, untouched here.
+    private static final String PURGE_PAST_SQL = """
+        DELETE FROM events
+        WHERE starts_at < la_window_start() - INTERVAL '2 days'
+        """;
+
     private final Connection connection;
     private final ObjectMapper objectMapper;
 
@@ -103,6 +114,20 @@ public final class PostgresEventStore {
             ps.executeBatch();
         } catch (SQLException e) {
             throw new IllegalStateException("failed to upsert events", e);
+        }
+    }
+
+    /**
+     * Hard-deletes events that have already happened (start time more than two
+     * days ago). Returns the row count removed. Safe to run after any
+     * successful upsert - see {@link #PURGE_PAST_SQL} for why this doesn't
+     * touch the ghost-event grace path.
+     */
+    public int purgePastEvents() {
+        try (Statement statement = connection.createStatement()) {
+            return statement.executeUpdate(PURGE_PAST_SQL);
+        } catch (SQLException e) {
+            throw new IllegalStateException("failed to purge past events", e);
         }
     }
 

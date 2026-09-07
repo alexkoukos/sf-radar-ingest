@@ -161,6 +161,35 @@ class PostgresEventStoreTest {
     }
 
     @Test
+    void purgePastEventsRemovesOnlyEventsWellBeforeTheWindow() throws SQLException {
+        try (Connection connection = newConnection()) {
+            PostgresEventStore store = new PostgresEventStore(connection);
+            store.ensureSchema();
+
+            Instant now = Instant.now();
+            store.upsertAll(List.of(
+                scoredEventStartingAt("last-week", now.minus(7, ChronoUnit.DAYS)),
+                scoredEventStartingAt("yesterday", now.minus(1, ChronoUnit.DAYS)),
+                scoredEventStartingAt("tonight", now),
+                scoredEventStartingAt("next-week", now.plus(7, ChronoUnit.DAYS))));
+
+            int purged = store.purgePastEvents();
+
+            assertEquals(1, purged, "only the event 7 days in the past is purged");
+            try (Statement statement = connection.createStatement();
+                 ResultSet rs = statement.executeQuery("SELECT api_id FROM events ORDER BY api_id")) {
+                assertTrue(rs.next());
+                assertEquals("next-week", rs.getString("api_id"));
+                assertTrue(rs.next());
+                assertEquals("tonight", rs.getString("api_id"));
+                assertTrue(rs.next());
+                assertEquals("yesterday", rs.getString("api_id"));
+                assertFalse(rs.next());
+            }
+        }
+    }
+
+    @Test
     void reUpsertingWithADifferentDiscoveredViaUnionsRatherThanOverwrites() throws SQLException {
         try (Connection connection = newConnection()) {
             PostgresEventStore store = new PostgresEventStore(connection);

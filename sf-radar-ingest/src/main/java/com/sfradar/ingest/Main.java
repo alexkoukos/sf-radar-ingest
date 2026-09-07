@@ -58,6 +58,10 @@ public final class Main {
 
         HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
+            // Luma vanity slugs 302 to a canonical slug when a calendar is
+            // renamed (e.g. sf-builders-collective -> sf-hackersquad). Follow
+            // it so a rename degrades to "still scraped" instead of a dead target.
+            .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
         NextDataExtractor nextDataExtractor = new NextDataExtractor(objectMapper);
         EventShapeMatcher eventShapeMatcher = new EventShapeMatcher();
@@ -126,6 +130,8 @@ public final class Main {
             if (!totalFailure) {
                 store.upsertAll(scoredEvents);
                 System.out.println("Persisted " + scoredEvents.size() + " events to Postgres");
+                int purged = store.purgePastEvents();
+                System.out.println("Purged " + purged + " past events (started more than 2 days ago)");
             }
             store.recordRun(runSummary, !totalFailure);
         }
