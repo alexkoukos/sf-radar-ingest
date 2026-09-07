@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { planFeedIcs } from "../../src/lib/planFeed";
+import { planFeedIcs } from "../_lib/planFeed.js";
 
 /**
  * Live calendar feed for a plan: GET /feed/<slug>.ics -> text/calendar built

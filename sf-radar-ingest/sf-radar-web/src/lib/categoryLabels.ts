@@ -1,8 +1,5 @@
-export const CATEGORY_LABELS: Record<string, string> = {
-  INVESTOR_MEETUP: "Investor",
-  HACKATHON: "Hackathon",
-  DEMO_DAY: "Demo Day",
-  FOUNDER_SOCIAL: "Founder Social",
-  GENERAL_NETWORKING: "Networking",
-  OTHER: "Other",
-};
+// Re-export shim. The implementation lives in api/_lib/categoryLabels.ts so the
+// Vercel serverless functions (which cannot reliably import across the
+// src/ boundary under "type": "module") can share it. The client imports
+// it from here via Vite, which resolves across the repo without issue.
+export * from "../../api/_lib/categoryLabels";

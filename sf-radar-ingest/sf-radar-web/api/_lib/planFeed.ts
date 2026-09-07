@@ -1,6 +1,6 @@
-import { buildPlanIcs, type TzMode } from "./ics";
-import { possessivePhrase } from "./possessive";
-import type { EventLike } from "../types";
+import { buildPlanIcs, type TzMode } from "./ics.js";
+import { possessivePhrase } from "./possessive.js";
+import type { EventLike } from "../../src/types.js";
 
 /**
  * Pure core of the /api/feed/<slug>.ics serverless function: turn whatever
