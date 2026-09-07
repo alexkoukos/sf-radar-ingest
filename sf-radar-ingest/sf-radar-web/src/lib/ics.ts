@@ -1,6 +1,6 @@
 import type { EventLike } from "../types";
 import { CATEGORY_LABELS } from "./categoryLabels";
-import { locationLine } from "./eventFormat";
+import { locationLine } from "./locationLine";
 
 /**
  * Hand-rolled RFC 5545 iCalendar writer. Pure (no DOM), so it is shared by

@@ -1,5 +1,7 @@
 import type { EventLike } from "../types";
 
+export { locationLine } from "./locationLine";
+
 export const ptTimeFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Los_Angeles",
   weekday: "short",
@@ -63,13 +65,4 @@ export function isGated(event: EventLike): boolean {
 export function venueLabel(event: EventLike): string {
   if (event.is_online) return "Online";
   return event.sublocality || event.city || "Venue TBA";
-}
-
-/** Fuller location line (sublocality, city, region) for the detail modal. */
-export function locationLine(event: EventLike): string | null {
-  if (event.is_online) return "Online";
-  const parts = [event.sublocality, event.city, event.region].filter(
-    (part): part is string => Boolean(part?.trim()),
-  );
-  return parts.length > 0 ? parts.join(", ") : null;
 }
