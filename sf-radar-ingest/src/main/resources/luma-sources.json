@@ -4,9 +4,6 @@
   "targets": [
     { "label": "discover:sf", "url": "https://luma.com/sf" },
 
-    { "label": "calendar:cal-R9IQUb53FUrolUF", "url": "https://luma.com/calendar/cal-R9IQUb53FUrolUF" },
-    { "label": "calendar:cal-cRAkoeu56h8zaxC", "url": "https://luma.com/calendar/cal-cRAkoeu56h8zaxC" },
-
     { "label": "calendar:ai-sf", "url": "https://luma.com/ai-sf" },
     { "label": "calendar:bayareafoundersclub", "url": "https://luma.com/bayareafoundersclub" },
     { "label": "calendar:genai-sf", "url": "https://luma.com/genai-sf" },

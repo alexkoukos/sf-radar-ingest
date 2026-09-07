@@ -27,6 +27,13 @@ public final class NextDataExtractor {
     public JsonNode extract(String html) {
         int start = html.indexOf(SCRIPT_OPEN_MARKER);
         if (start == -1) {
+            if (html.contains("self.__next_f.push")) {
+                throw new NextDataShapeException(
+                    "__NEXT_DATA__ script tag not found, but self.__next_f.push chunks are present - "
+                        + "Luma has moved this page from the Next.js Pages Router to App Router / RSC "
+                        + "streaming. The extractor needs an RSC-chunk reassembly path before this "
+                        + "target can be scraped again.");
+            }
             throw new NextDataShapeException(
                 "__NEXT_DATA__ script tag not found - Luma's page structure has likely changed "
                     + "(the tag itself is gone, not just a field inside it)");

@@ -9,21 +9,25 @@ import com.sfradar.ingest.dedupe.EventDeduper;
 import com.sfradar.ingest.model.ClassifiedEvent;
 import com.sfradar.ingest.model.ScoredEvent;
 import com.sfradar.ingest.run.RunSummary;
+import com.sfradar.ingest.run.SanityReport;
 import com.sfradar.ingest.run.TargetOutcome;
 import com.sfradar.ingest.score.EventScorer;
 import com.sfradar.ingest.source.EventSource;
 import com.sfradar.ingest.source.RawEvent;
 import com.sfradar.ingest.source.embedded.EventShapeMatcher;
 import com.sfradar.ingest.source.embedded.HttpEmbeddedEventSource;
+import com.sfradar.ingest.source.embedded.LumaEventApiClient;
 import com.sfradar.ingest.source.embedded.NextDataExtractor;
 import com.sfradar.ingest.source.embedded.NextDataShapeException;
 import com.sfradar.ingest.store.PostgresEventStore;
+import com.sfradar.ingest.util.Log;
 
 import java.net.http.HttpClient;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +48,10 @@ import java.util.stream.Collectors;
  */
 public final class Main {
 
+    /** Matches the frontend's 14-night stay window - the span the coverage
+     *  check in {@link SanityReport} is measured against. */
+    private static final int SANITY_WINDOW_DAYS = 14;
+
     public static void main(String[] args) throws SQLException {
         ObjectMapper objectMapper = new ObjectMapper();
         SourcesConfig config = new SourcesConfigLoader(objectMapper).loadFromClasspath("/luma-sources.json");
@@ -53,12 +61,14 @@ public final class Main {
             .build();
         NextDataExtractor nextDataExtractor = new NextDataExtractor(objectMapper);
         EventShapeMatcher eventShapeMatcher = new EventShapeMatcher();
+        LumaEventApiClient apiClient = new LumaEventApiClient(
+            httpClient, config.userAgent(), objectMapper, eventShapeMatcher);
         EventClassifier classifier = new EventClassifier();
 
         List<EventSource> sources = config.targets().stream()
             .<EventSource>map(target -> new HttpEmbeddedEventSource(
                 target.label(), target.url(), config.userAgent(),
-                httpClient, nextDataExtractor, eventShapeMatcher))
+                httpClient, nextDataExtractor, eventShapeMatcher, apiClient))
             .toList();
 
         List<ClassifiedEvent> allEvents = new ArrayList<>();
@@ -66,14 +76,19 @@ public final class Main {
         for (EventSource source : sources) {
             try {
                 List<RawEvent> events = source.fetch();
-                System.out.println(source.label() + ": " + events.size() + " events");
+                if (events.isEmpty()) {
+                    Log.warn(source.label() + ": returned 0 events (HTTP 200, no structural break) - "
+                        + "an empty calendar, or a shape change that dodged the signature check");
+                } else {
+                    Log.info(source.label() + ": " + events.size() + " events");
+                }
                 events.stream().map(classifier::classify).forEach(allEvents::add);
                 outcomes.add(TargetOutcome.success(source.label(), events.size()));
             } catch (NextDataShapeException e) {
-                System.err.println(source.label() + ": STRUCTURAL BREAK - " + e.getMessage());
+                Log.warn(source.label() + ": STRUCTURAL BREAK - " + e.getMessage());
                 outcomes.add(TargetOutcome.failure(source.label(), true, e.getMessage()));
             } catch (Exception e) {
-                System.err.println(source.label() + ": FAILED - " + e.getMessage());
+                Log.warn(source.label() + ": FAILED, target skipped this run", e);
                 outcomes.add(TargetOutcome.failure(source.label(), false, e.getMessage()));
             }
         }
@@ -87,6 +102,15 @@ public final class Main {
 
         EventScorer scorer = new EventScorer();
         List<ScoredEvent> scoredEvents = deduped.stream().map(scorer::score).toList();
+
+        SanityReport sanity = SanityReport.of(scoredEvents, Instant.now(), SANITY_WINDOW_DAYS);
+        System.out.println(sanity.render());
+        if (!sanity.isHealthy()) {
+            Log.warn("=== INGEST COVERAGE CHECK FAILED ===");
+            sanity.warnings().forEach(w -> Log.warn("  " + w));
+            Log.warn("Data was still persisted (a partial shortfall never blocks the upsert), "
+                + "but this run looks like the Sept 2026 truncation regression - investigate pagination.");
+        }
 
         RunSummary runSummary = new RunSummary(outcomes, allEvents.size());
         boolean totalFailure = runSummary.isTotalFailure();
