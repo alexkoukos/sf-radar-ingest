@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { buildPlanIcs, type TzMode } from "../../src/lib/ics";
-import { possessivePhrase } from "../../src/lib/possessive";
+import { planFeedIcs } from "../../src/lib/planFeed";
 
 /**
  * Live calendar feed for a plan: GET /feed/<slug>.ics -> text/calendar built
@@ -11,7 +10,8 @@ import { possessivePhrase } from "../../src/lib/possessive";
  *
  * Anonymous: reads via the get_plan SECURITY DEFINER RPC with the public
  * anon key. The RPC is the whole read surface - a slug is required and
- * plans can't be listed.
+ * plans can't be listed. All response shaping is in ../../src/lib/planFeed
+ * (pure, unit-tested); this file only does routing + the one fetch.
  */
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
@@ -21,66 +21,56 @@ const SLUG_RE = /^[A-Za-z0-9_-]{16,64}$/;
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   res.setHeader("X-Robots-Tag", "noindex, nofollow");
 
-  const rawSlug = Array.isArray(req.query.slug) ? req.query.slug[0] : req.query.slug ?? "";
-  const slug = String(rawSlug).replace(/\.ics$/i, "");
-
-  if (!SLUG_RE.test(slug)) {
-    sendText(res, 400, "Bad plan id.");
-    return;
-  }
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    sendText(res, 500, "Feed is not configured.");
-    return;
-  }
-
-  let plan: Record<string, unknown> | null = null;
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_plan`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ p_slug: slug }),
-    });
-    if (response.ok) {
-      const data = (await response.json()) as unknown;
-      plan = Array.isArray(data) ? (data[0] ?? null) : (data as Record<string, unknown> | null);
+    const rawSlug = Array.isArray(req.query.slug) ? req.query.slug[0] : (req.query.slug ?? "");
+    const slug = String(rawSlug).replace(/\.ics$/i, "");
+
+    if (!SLUG_RE.test(slug)) {
+      sendText(res, 400, "Bad plan id.");
+      return;
     }
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      sendText(res, 500, "Feed is not configured.");
+      return;
+    }
+
+    let rpcData: unknown = null;
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_plan`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ p_slug: slug }),
+      });
+      if (!response.ok) {
+        sendText(res, 502, "Could not reach the plan store.");
+        return;
+      }
+      rpcData = await response.json();
+    } catch {
+      sendText(res, 502, "Could not reach the plan store.");
+      return;
+    }
+
+    const result = planFeedIcs(rpcData);
+    if (result.status !== 200) {
+      sendText(res, result.status, result.body);
+      return;
+    }
+
+    res.status(200);
+    res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+    res.setHeader("Content-Disposition", `inline; filename="${result.filename}"`);
+    // Short edge cache: shields the function from poll storms without
+    // pretending the feed is fresher than Google's own ~8-24h refresh.
+    res.setHeader("Cache-Control", "public, max-age=900, s-maxage=900");
+    res.send(result.body);
   } catch {
-    sendText(res, 502, "Could not reach the plan store.");
-    return;
+    sendText(res, 500, "Feed error.");
   }
-
-  if (!plan || typeof plan.slug !== "string") {
-    sendText(res, 404, "No plan with that id.");
-    return;
-  }
-
-  const attending = Array.isArray(plan.attending) ? plan.attending : [];
-  const tzMode: TzMode = plan.tz_mode === "floating" ? "floating" : "tzid";
-  const displayName = typeof plan.display_name === "string" ? plan.display_name : "";
-  const calName = possessivePhrase(displayName, "SF Radar plan");
-
-  const { value } = buildPlanIcs(attending, { tzMode, calName, allowEmpty: true });
-
-  res.status(200);
-  res.setHeader("Content-Type", "text/calendar; charset=utf-8");
-  res.setHeader("Content-Disposition", `inline; filename="${filenameFor(displayName)}"`);
-  // Short edge cache: shields the function from poll storms without
-  // pretending the feed is fresher than Google's own ~8-24h refresh.
-  res.setHeader("Cache-Control", "public, max-age=900, s-maxage=900");
-  res.send(value ?? "");
-}
-
-function filenameFor(name: string): string {
-  const base = name
-    .trim()
-    .replace(/[^\p{L}\p{N}-]+/gu, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-  return `${base ? `${base}-` : ""}sf-radar-plan.ics`;
 }
 
 function sendText(res: VercelResponse, status: number, body: string): void {
