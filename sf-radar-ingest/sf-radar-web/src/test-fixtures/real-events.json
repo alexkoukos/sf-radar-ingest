@@ -1,0 +1,53 @@
+[
+  {
+    "api_id": "evt-zDS9N3cnIKHbYb6",
+    "name": "AI Demos & WeAreDevelopers Happy Hour",
+    "url_slug": "wearedevelopers-happy-hour-sep8-2026",
+    "starts_at": "2026-09-09T00:00:00+00:00",
+    "ends_at": "2026-09-09T03:00:00+00:00",
+    "is_online": false,
+    "host_name": "Adam Chan",
+    "city": "San Francisco",
+    "region": "California",
+    "sublocality": "South Beach",
+    "is_free": true,
+    "price_cents": null,
+    "rsvp_type": "OPEN",
+    "category": "DEMO_DAY",
+    "score": 0.966666666666667
+  },
+  {
+    "api_id": "evt-iWGJmsIPKKUYCE0",
+    "name": "🌐 Energy Generation Cluster: Plug-in Solar 101, Live Demo, & Deep Dive Q&A",
+    "url_slug": "m4hetq6h",
+    "starts_at": "2026-09-09T00:00:00+00:00",
+    "ends_at": "2026-09-09T02:00:00+00:00",
+    "is_online": false,
+    "host_name": "9Zero",
+    "city": "San Francisco",
+    "region": "California",
+    "sublocality": "Financial District",
+    "is_free": true,
+    "price_cents": null,
+    "rsvp_type": "APPLICATION",
+    "category": "DEMO_DAY",
+    "score": 0.85
+  },
+  {
+    "api_id": "evt-nUFlQU8MgZukBbV",
+    "name": "Hardware Pitch Night - Studio 45",
+    "url_slug": "bhmbsn8p",
+    "starts_at": "2026-09-25T01:00:00+00:00",
+    "ends_at": "2026-09-25T04:00:00+00:00",
+    "is_online": false,
+    "host_name": "Nate Padgett",
+    "city": "San Francisco",
+    "region": "California",
+    "sublocality": "Bernal Heights",
+    "is_free": true,
+    "price_cents": null,
+    "rsvp_type": "OPEN",
+    "category": "DEMO_DAY",
+    "score": 0.966666666666667
+  }
+]

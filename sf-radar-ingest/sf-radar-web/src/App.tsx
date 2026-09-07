@@ -11,11 +11,13 @@ import {
 import { loadCachedEvents, saveCachedEvents } from "./lib/storage";
 import { createLoggedId, loadLocalPlan, saveLocalPlan, type LocalPlan } from "./lib/localPlan";
 import { loadStartDate, saveStartDate } from "./lib/startDate";
+import { laZoneAbbrev } from "./lib/eventFormat";
 import { isFreeAndOpen, isNewcomerFriendly } from "./lib/scoreBreakdown";
 import NightStrip, { STRONG_SCORE_THRESHOLD } from "./components/NightStrip";
 import EventCard from "./components/EventCard";
 import EventModal from "./components/EventModal";
 import FilterChips from "./components/FilterChips";
+import PlanActions from "./components/PlanActions";
 import SortRow, { type SortMode } from "./components/SortRow";
 import ViewToggle from "./components/ViewToggle";
 import LogNightForm from "./components/LogNightForm";
@@ -210,6 +212,13 @@ function App() {
     return plan.logged.filter((l) => (selectedNight !== null ? l.nightIndex === selectedNight : idxSet.has(l.nightIndex)));
   }, [plan.logged, selectedNight, windowNights]);
 
+  // Live events currently marked Attending - what "Download .ics" (and,
+  // next stage, the subscribe-able feed) operates on.
+  const attendingEvents = useMemo(
+    () => events.filter((e) => plan.attending[e.api_id]),
+    [events, plan.attending],
+  );
+
   function nightLabelFor(nightIndex: number): string {
     const night = wideNights?.find((n) => n.index === nightIndex);
     return night ? nightHeadingFormatter.format(night.start) : "";
@@ -319,9 +328,12 @@ function App() {
         />
       )}
 
+      {attendingEvents.length > 0 && <PlanActions attendingEvents={attendingEvents} />}
+
       {staleSince && (
         <p className="banner banner--stale">
-          Showing data from {staleTimestampFormatter.format(new Date(staleSince))} PDT - couldn't refresh
+          Showing data from {staleTimestampFormatter.format(new Date(staleSince))}{" "}
+          {laZoneAbbrev(new Date(staleSince))} - couldn't refresh
           {error ? `: ${error}` : "."}
         </p>
       )}

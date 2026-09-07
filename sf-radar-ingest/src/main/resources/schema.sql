@@ -76,3 +76,106 @@ LANGUAGE sql STABLE AS $$
         AND last_seen_at >= now() - INTERVAL '24 hours'
     ORDER BY score DESC NULLS LAST, starts_at ASC;
 $$;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- Live shareable / subscribable plans (frontend feature, no auth).
+--
+-- One row per plan, keyed by an unguessable 128-bit slug that doubles as
+-- the share-link id and the calendar-feed id. This is the source of truth
+-- for anything shared; the browser keeps a localStorage copy as an offline
+-- cache only. A subscriber's calendar re-polls the feed and sees edits -
+-- it is a live view, not the one-shot snapshot this replaces.
+--
+-- RLS is on with ZERO table policies, exactly like ingestion_runs: no
+-- direct PostgREST read or write. Both paths go through the SECURITY
+-- DEFINER functions below, so a caller can only ever touch a plan whose
+-- exact slug they already hold - no listing, no enumeration.
+CREATE TABLE IF NOT EXISTS plans (
+    slug         TEXT PRIMARY KEY,
+    display_name TEXT,                                   -- 1-40 chars, normalized client-side; nullable
+    tz_mode      TEXT NOT NULL DEFAULT 'tzid'
+                 CHECK (tz_mode IN ('tzid', 'floating')),
+    start_date   TEXT,                                   -- "YYYY-MM-DD" LA arrival anchor, nullable
+    attending    JSONB NOT NULL DEFAULT '[]'::jsonb,     -- array of event snapshots
+    logged       JSONB NOT NULL DEFAULT '[]'::jsonb,     -- array of {date,title,note}
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+
+-- Read path (used by the shared page and the /feed serverless function).
+CREATE OR REPLACE FUNCTION get_plan(p_slug TEXT)
+RETURNS plans
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT * FROM plans WHERE slug = p_slug;
+$$;
+
+-- Create-or-update path. The client mints the slug (crypto.randomUUID, 128
+-- bits) and keeps it in localStorage; this is the ONLY way anon writes the
+-- table. Validates slug shape, tz_mode, and payload size.
+CREATE OR REPLACE FUNCTION upsert_plan(
+    p_slug         TEXT,
+    p_display_name TEXT,
+    p_tz_mode      TEXT,
+    p_start_date   TEXT,
+    p_attending    JSONB,
+    p_logged       JSONB
+) RETURNS plans
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_row plans;
+BEGIN
+    IF p_slug IS NULL OR p_slug !~ '^[A-Za-z0-9_-]{16,64}$' THEN
+        RAISE EXCEPTION 'invalid slug';
+    END IF;
+    IF p_attending IS NULL
+       OR jsonb_typeof(p_attending) <> 'array'
+       OR jsonb_array_length(p_attending) > 300 THEN
+        RAISE EXCEPTION 'attending must be a JSON array of at most 300 events';
+    END IF;
+    IF p_logged IS NOT NULL
+       AND (jsonb_typeof(p_logged) <> 'array' OR jsonb_array_length(p_logged) > 300) THEN
+        RAISE EXCEPTION 'logged must be a JSON array of at most 300 entries';
+    END IF;
+    IF COALESCE(p_tz_mode, 'tzid') NOT IN ('tzid', 'floating') THEN
+        RAISE EXCEPTION 'invalid tz_mode';
+    END IF;
+
+    INSERT INTO plans (slug, display_name, tz_mode, start_date, attending, logged, updated_at)
+    VALUES (
+        p_slug,
+        NULLIF(left(p_display_name, 40), ''),
+        COALESCE(p_tz_mode, 'tzid'),
+        p_start_date,
+        p_attending,
+        COALESCE(p_logged, '[]'::jsonb),
+        now()
+    )
+    ON CONFLICT (slug) DO UPDATE SET
+        display_name = EXCLUDED.display_name,
+        tz_mode      = EXCLUDED.tz_mode,
+        start_date   = EXCLUDED.start_date,
+        attending    = EXCLUDED.attending,
+        logged       = EXCLUDED.logged,
+        updated_at   = now()
+    RETURNING * INTO v_row;
+
+    RETURN v_row;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_plan(TEXT) TO anon;
+GRANT EXECUTE ON FUNCTION upsert_plan(TEXT, TEXT, TEXT, TEXT, JSONB, JSONB) TO anon;
+
+-- Superseded one-shot snapshot objects (harmless no-ops if never created).
+DROP FUNCTION IF EXISTS create_shared_plan(JSONB, JSONB, TEXT);
+DROP FUNCTION IF EXISTS get_shared_plan(TEXT);
+DROP TABLE IF EXISTS shared_plans;
