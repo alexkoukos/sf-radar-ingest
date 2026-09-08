@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   clearGroupMembership,
+  groupFeedUrls,
   loadGroupMembership,
   parseGroupSlug,
   saveGroupMembership,
@@ -30,6 +31,19 @@ describe("parseGroupSlug", () => {
   it("returns null when there's no slug-shaped token", () => {
     expect(parseGroupSlug("not a link")).toBeNull();
     expect(parseGroupSlug("https://example.com/group/tooshort")).toBeNull();
+  });
+});
+
+describe("groupFeedUrls", () => {
+  it("builds https / webcal / Google forms for the combined feed", () => {
+    const u = groupFeedUrls("aB3-_dEf".repeat(4), "https://sf-radar-ingest.vercel.app");
+    expect(u.https).toBe(
+      "https://sf-radar-ingest.vercel.app/group/feed/aB3-_dEfaB3-_dEfaB3-_dEfaB3-_dEf.ics",
+    );
+    expect(u.webcal).toBe(
+      "webcal://sf-radar-ingest.vercel.app/group/feed/aB3-_dEfaB3-_dEfaB3-_dEfaB3-_dEf.ics",
+    );
+    expect(u.google).toContain("calendar.google.com/calendar/render?cid=webcal://");
   });
 });
 
