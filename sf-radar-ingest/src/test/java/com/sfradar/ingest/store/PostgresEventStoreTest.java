@@ -161,6 +161,29 @@ class PostgresEventStoreTest {
     }
 
     @Test
+    void getDashboardEventsKeepsOnlySanFranciscoCityEvents() throws SQLException {
+        try (Connection connection = newConnection()) {
+            PostgresEventStore store = new PostgresEventStore(connection);
+            store.ensureSchema();
+
+            Instant now = Instant.now();
+            store.upsertAll(List.of(
+                scoredEventInCity("sf", now, "San Francisco"),
+                scoredEventInCity("peninsula", now, "Palo Alto"),
+                scoredEventInCity("far-away", now, "New York"),
+                scoredEventInCity("no-city", now, null)));
+
+            try (Statement statement = connection.createStatement();
+                 ResultSet rs = statement.executeQuery(
+                     "SELECT api_id FROM get_dashboard_events(3) ORDER BY api_id")) {
+                assertTrue(rs.next());
+                assertEquals("sf", rs.getString("api_id"));
+                assertFalse(rs.next(), "only the San Francisco event survives the geo gate");
+            }
+        }
+    }
+
+    @Test
     void purgePastEventsRemovesOnlyEventsWellBeforeTheWindow() throws SQLException {
         try (Connection connection = newConnection()) {
             PostgresEventStore store = new PostgresEventStore(connection);
@@ -231,6 +254,16 @@ class PostgresEventStoreTest {
         RawEvent raw = new RawEvent(
             apiId, apiId, "test-event", startsAt, startsAt.plus(1, ChronoUnit.HOURS), false,
             "Acme Host", "San Francisco", "CA", "SoMa", "US",
+            37.7749, -122.4194, false, 2500, true,
+            "none", "open", "full", "test"
+        );
+        return new ScoredEvent(new ClassifiedEvent(raw, Category.FOUNDER_SOCIAL, RsvpType.OPEN), 0.5);
+    }
+
+    private ScoredEvent scoredEventInCity(String apiId, Instant startsAt, String city) {
+        RawEvent raw = new RawEvent(
+            apiId, apiId, "test-event", startsAt, startsAt.plus(1, ChronoUnit.HOURS), false,
+            "Acme Host", city, "CA", "SoMa", "US",
             37.7749, -122.4194, false, 2500, true,
             "none", "open", "full", "test"
         );
