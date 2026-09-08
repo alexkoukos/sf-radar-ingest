@@ -11,12 +11,16 @@
 
 const GROUP_KEY = "sfradar:v1:group";
 export const GROUP_SLUG_RE = /^[a-f0-9]{32}$/;
+const FEED_TOKEN_RE = /^[A-Za-z0-9_-]{32}$/;
 
 export interface GroupMembership {
   slug: string;
   name: string;
   color: string;
   joinOrder: number;
+  /** This member's revocable calendar-feed token. "" for breadcrumbs written
+   *  before the feed shipped — the feed block just hides until they re-join. */
+  feedToken: string;
 }
 
 export function loadGroupMembership(): GroupMembership | null {
@@ -30,10 +34,27 @@ export function loadGroupMembership(): GroupMembership | null {
       name: typeof p.name === "string" ? p.name : "your group",
       color: typeof p.color === "string" && /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : "#4D4D4D",
       joinOrder: typeof p.joinOrder === "number" ? p.joinOrder : 0,
+      feedToken:
+        typeof p.feedToken === "string" && FEED_TOKEN_RE.test(p.feedToken) ? p.feedToken : "",
     };
   } catch {
     return null;
   }
+}
+
+export interface GroupFeedUrls {
+  https: string;
+  webcal: string;
+  google: string;
+}
+
+/** The three subscribe forms for the combined group feed. */
+export function groupFeedUrls(feedToken: string, origin?: string): GroupFeedUrls {
+  const base = origin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  const https = `${base}/group/feed/${feedToken}.ics`;
+  const webcal = https.replace(/^https?:/i, "webcal:");
+  const google = `https://calendar.google.com/calendar/render?cid=${webcal}`;
+  return { https, webcal, google };
 }
 
 /** Fires after a same-tab save/clear so the nav indicator can re-read without a reload. */

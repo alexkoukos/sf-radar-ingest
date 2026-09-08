@@ -41,20 +41,37 @@ describe("group membership localStorage round-trip", () => {
     delete (globalThis as { localStorage?: unknown }).localStorage;
   });
 
+  const FEED = "aB3-_dEf".repeat(4); // 32 chars of [A-Za-z0-9_-]
+
   it("saves and reloads a membership", () => {
-    saveGroupMembership({ slug: SLUG, name: "Sept crew", color: "#56B4E9", joinOrder: 2 });
+    saveGroupMembership({
+      slug: SLUG,
+      name: "Sept crew",
+      color: "#56B4E9",
+      joinOrder: 2,
+      feedToken: FEED,
+    });
     expect(loadGroupMembership()).toEqual({
       slug: SLUG,
       name: "Sept crew",
       color: "#56B4E9",
       joinOrder: 2,
+      feedToken: FEED,
     });
   });
 
   it("clear removes it", () => {
-    saveGroupMembership({ slug: SLUG, name: "x", color: "#000000", joinOrder: 0 });
+    saveGroupMembership({ slug: SLUG, name: "x", color: "#000000", joinOrder: 0, feedToken: FEED });
     clearGroupMembership();
     expect(loadGroupMembership()).toBeNull();
+  });
+
+  it("tolerates a breadcrumb written before the feed shipped (no feedToken)", () => {
+    localStorage.setItem(
+      "sfradar:v1:group",
+      JSON.stringify({ slug: SLUG, name: "old", color: "#E69F00", joinOrder: 0 }),
+    );
+    expect(loadGroupMembership()?.feedToken).toBe("");
   });
 
   it("rejects a stored blob with a bad slug", () => {

@@ -4,6 +4,7 @@ import { fetchGroupView, type GroupMember } from "../lib/groupView";
 import {
   clearGroupMembership,
   createGroup,
+  groupFeedUrls,
   joinGroup,
   loadGroupMembership,
   parseGroupSlug,
@@ -73,6 +74,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
 
   const inviteUrl =
     group && typeof window !== "undefined" ? `${window.location.origin}/group/${group.slug}` : "";
+  const feed = group && group.feedToken ? groupFeedUrls(group.feedToken) : null;
 
   // ── create ───────────────────────────────────────────────────────────
   const defaultStart = startDate ?? todayLaYmd();
@@ -108,6 +110,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
         name: gName.trim(),
         color: res.color,
         joinOrder: res.joinOrder,
+        feedToken: res.feedToken,
       };
       saveGroupMembership(m);
       setFreshPassphrase(gPass);
@@ -152,6 +155,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
         name: groupName,
         color: res.color,
         joinOrder: res.joinOrder,
+        feedToken: res.feedToken,
       };
       saveGroupMembership(m);
       setJPass("");
@@ -215,6 +219,32 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
           Share the link <strong>and</strong> the passphrase (the one you set) in Slack — the
           passphrase isn't stored anywhere and can't be recovered.
         </p>
+
+        {feed && (
+          <div className="hub-group__feed">
+            <p className="hub__note text-muted">
+              <strong>Combined calendar feed</strong> — everyone's plans in one subscribe-able
+              calendar, each entry prefixed with the person's name. Meetings marked "Busy" show as{" "}
+              <em>Busy</em> only.
+            </p>
+            <CopyField label="Feed (https)" value={feed.https} />
+            <CopyField label="Feed (webcal)" value={feed.webcal} />
+            <div className="hub-form__actions">
+              <a
+                className="btn btn-secondary"
+                href={feed.google}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Add to Google Calendar ↗
+              </a>
+            </div>
+            <p className="hub__note text-muted">
+              A subscription keeps updating, but calendar apps only re-check every so often (Google
+              ~8–24h). It isn't instant.
+            </p>
+          </div>
+        )}
 
         {freshPassphrase && (
           <div className="hub-group__passphrase">
