@@ -36,12 +36,23 @@ export function loadGroupMembership(): GroupMembership | null {
   }
 }
 
+/** Fires after a same-tab save/clear so the nav indicator can re-read without a reload. */
+export const GROUP_CHANGED_EVENT = "sfradar:group-changed";
+function notifyGroupChange(): void {
+  try {
+    window.dispatchEvent(new Event(GROUP_CHANGED_EVENT));
+  } catch {
+    /* non-DOM context */
+  }
+}
+
 export function saveGroupMembership(m: GroupMembership): void {
   try {
     localStorage.setItem(GROUP_KEY, JSON.stringify(m));
   } catch {
     /* private browsing — the value still works for this session's state */
   }
+  notifyGroupChange();
 }
 
 export function clearGroupMembership(): void {
@@ -50,6 +61,7 @@ export function clearGroupMembership(): void {
   } catch {
     /* non-fatal */
   }
+  notifyGroupChange();
 }
 
 /** A 32-hex group slug out of a pasted /group/<slug> URL, or a bare slug. */

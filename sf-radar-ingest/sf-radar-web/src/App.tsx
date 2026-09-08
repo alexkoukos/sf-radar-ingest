@@ -11,7 +11,7 @@ import {
 import { loadCachedEvents, saveCachedEvents } from "./lib/storage";
 import { createLoggedId, loadLocalPlan, saveLocalPlan, type LocalPlan } from "./lib/localPlan";
 import { loadStartDate, saveStartDate } from "./lib/startDate";
-import { loadGroupMembership, type GroupMembership } from "./lib/groupMembership";
+import { GROUP_CHANGED_EVENT, loadGroupMembership, type GroupMembership } from "./lib/groupMembership";
 import { laZoneAbbrev } from "./lib/eventFormat";
 import { isFreeAndOpen, isNewcomerFriendly } from "./lib/scoreBreakdown";
 import NightStrip, { STRONG_SCORE_THRESHOLD } from "./components/NightStrip";
@@ -83,6 +83,13 @@ function App() {
     setPlan(loadLocalPlan());
     setStartDateStr(loadStartDate());
     setGroup(loadGroupMembership());
+    const onGroupChange = () => setGroup(loadGroupMembership());
+    window.addEventListener(GROUP_CHANGED_EVENT, onGroupChange);
+    window.addEventListener("storage", onGroupChange); // other tabs
+    return () => {
+      window.removeEventListener(GROUP_CHANGED_EVENT, onGroupChange);
+      window.removeEventListener("storage", onGroupChange);
+    };
   }, []);
 
   useEffect(() => {
