@@ -161,24 +161,37 @@ class PostgresEventStoreTest {
     }
 
     @Test
-    void getDashboardEventsKeepsOnlySanFranciscoCityEvents() throws SQLException {
+    void getDashboardEventsKeepsGreaterBayAreaAndDropsFarAway() throws SQLException {
         try (Connection connection = newConnection()) {
             PostgresEventStore store = new PostgresEventStore(connection);
             store.ensureSchema();
 
             Instant now = Instant.now();
             store.upsertAll(List.of(
-                scoredEventInCity("sf", now, "San Francisco"),
-                scoredEventInCity("peninsula", now, "Palo Alto"),
-                scoredEventInCity("far-away", now, "New York"),
-                scoredEventInCity("no-city", now, null)));
+                // In the Bay Area box (kept)
+                geoEvent("sf", now, 37.7749, -122.4194, "California", "US"),
+                geoEvent("san-jose", now, 37.3382, -121.8863, "California", "US"),
+                geoEvent("santa-rosa", now, 38.4404, -122.7141, "California", "US"),
+                // Out of the box by coordinates (dropped)
+                geoEvent("los-angeles", now, 34.0522, -118.2437, "California", "US"),
+                geoEvent("new-york", now, 40.7128, -74.0060, "New York", "US"),
+                geoEvent("sacramento", now, 38.5816, -121.4944, "California", "US"),
+                // No coordinates — kept only if region/country don't contradict a Bay origin
+                geoEvent("no-coords-ca", now, null, null, "California", "US"),
+                geoEvent("no-coords-untagged", now, null, null, null, null),
+                geoEvent("no-coords-ny", now, null, null, "New York", "US"),
+                geoEvent("no-coords-jp", now, null, null, null, "JP")));
 
             try (Statement statement = connection.createStatement();
                  ResultSet rs = statement.executeQuery(
                      "SELECT api_id FROM get_dashboard_events(3) ORDER BY api_id")) {
-                assertTrue(rs.next());
-                assertEquals("sf", rs.getString("api_id"));
-                assertFalse(rs.next(), "only the San Francisco event survives the geo gate");
+                java.util.List<String> kept = new java.util.ArrayList<>();
+                while (rs.next()) {
+                    kept.add(rs.getString("api_id"));
+                }
+                assertEquals(
+                    List.of("no-coords-ca", "no-coords-untagged", "san-jose", "santa-rosa", "sf"),
+                    kept);
             }
         }
     }
@@ -260,11 +273,12 @@ class PostgresEventStoreTest {
         return new ScoredEvent(new ClassifiedEvent(raw, Category.FOUNDER_SOCIAL, RsvpType.OPEN), 0.5);
     }
 
-    private ScoredEvent scoredEventInCity(String apiId, Instant startsAt, String city) {
+    private ScoredEvent geoEvent(
+            String apiId, Instant startsAt, Double lat, Double lon, String region, String countryCode) {
         RawEvent raw = new RawEvent(
             apiId, apiId, "test-event", startsAt, startsAt.plus(1, ChronoUnit.HOURS), false,
-            "Acme Host", city, "CA", "SoMa", "US",
-            37.7749, -122.4194, false, 2500, true,
+            "Acme Host", null, region, null, countryCode,
+            lat, lon, false, 2500, true,
             "none", "open", "full", "test"
         );
         return new ScoredEvent(new ClassifiedEvent(raw, Category.FOUNDER_SOCIAL, RsvpType.OPEN), 0.5);
