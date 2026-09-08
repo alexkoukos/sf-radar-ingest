@@ -17,6 +17,7 @@ import {
 import SubscribePanel from "./SubscribePanel";
 import CopyField from "./CopyField";
 import GroupHubSection from "./GroupHubSection";
+import HowItWorks from "./HowItWorks";
 
 const NAME_KEY = "sfradar:v1:displayName";
 const TZ_KEY = "sfradar:v1:tzMode";
@@ -190,7 +191,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
     <details id="plan-hub" className="plan-hub">
       <summary className="plan-hub__summary">
         <span className="plan-hub__title">Group · Share · Calendar</span>
-        <span className="plan-hub__hint text-muted">trip group, share link, calendar feed</span>
+        <span className="plan-hub__hint text-muted">trip group, share link, calendar feed, how it works</span>
       </summary>
       <div className="plan-hub__body" aria-label="Group, share, and calendar">
 
@@ -316,6 +317,9 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
           </fieldset>
         </details>
       </section>
+
+      {/* ── HOW THIS WORKS ────────────────────────────────────────────── */}
+      <HowItWorks />
       </div>
     </details>
   );

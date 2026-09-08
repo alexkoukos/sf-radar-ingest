@@ -19,7 +19,6 @@ import EventCard from "./components/EventCard";
 import EventModal from "./components/EventModal";
 import FilterChips from "./components/FilterChips";
 import PlanActions from "./components/PlanActions";
-import HowItWorks from "./components/HowItWorks";
 import SortRow, { type SortMode } from "./components/SortRow";
 import ViewToggle from "./components/ViewToggle";
 import LogNightForm from "./components/LogNightForm";
@@ -433,8 +432,6 @@ function App() {
           startDate={startDateStr}
         />
       )}
-
-      <HowItWorks />
 
       <div className="hero">
         <div className="hero__top">
