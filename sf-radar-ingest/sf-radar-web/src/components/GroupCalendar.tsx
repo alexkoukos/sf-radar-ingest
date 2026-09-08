@@ -1,16 +1,20 @@
 import { useMemo, useState } from "react";
-import type { GroupView } from "../lib/groupView";
+import type { GroupMember, GroupView } from "../lib/groupView";
 import { laZoneAbbrev } from "../lib/eventFormat";
+import { peekEditKey } from "../lib/plan";
+import { deleteCustomEvent } from "../lib/customEvent";
 import {
   buildGroupNights,
   itemStart,
   mergeAttendance,
   ownedCustomEvents,
   type GroupItem,
+  type OwnedCustomEvent,
 } from "../lib/groupMerge";
 import { readableInk } from "../lib/memberColor";
 import MergedEventCard from "./MergedEventCard";
 import GroupCustomEventCard from "./GroupCustomEventCard";
+import CustomEventForm from "./CustomEventForm";
 
 type FilterMode = "everyone" | "some" | "me";
 
@@ -45,12 +49,25 @@ function dateForHeading(ymd: string): Date {
 
 function GroupCalendar({
   view,
-  meJoinOrder,
+  meMember,
+  onChanged,
 }: {
   view: GroupView;
-  meJoinOrder: number | null;
+  meMember: GroupMember | null;
+  onChanged: () => void;
 }) {
   const { group, members } = view;
+  const meJoinOrder = meMember?.join_order ?? null;
+
+  // Managing custom events needs the plan's WRITE credential, which lives only
+  // in localStorage on the device the plan was made. meMember != null already
+  // means the viewer's read slug matched a member (see fetchGroupView).
+  const editKey = peekEditKey();
+  const canManage = meMember !== null && editKey !== null;
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<OwnedCustomEvent | null>(null);
+  const [rowError, setRowError] = useState<string | null>(null);
 
   const [mode, setMode] = useState<FilterMode>("everyone");
   const [some, setSome] = useState<Set<number>>(() => new Set(members.map((m) => m.join_order)));
@@ -91,6 +108,37 @@ function GroupCalendar({
     });
   }
 
+  function openAdd() {
+    setEditing(null);
+    setFormOpen(true);
+    setRowError(null);
+  }
+
+  function openEdit(owned: OwnedCustomEvent) {
+    setEditing(owned);
+    setFormOpen(true);
+    setRowError(null);
+  }
+
+  function afterSave() {
+    setFormOpen(false);
+    setEditing(null);
+    onChanged();
+  }
+
+  async function handleDelete(owned: OwnedCustomEvent) {
+    if (!meMember || !editKey) return;
+    const label = owned.custom.kind === "busy" ? "this busy block" : "this custom event";
+    if (!window.confirm(`Delete ${label}? This can't be undone.`)) return;
+    setRowError(null);
+    try {
+      await deleteCustomEvent(meMember.read_slug, editKey, owned.custom.event_id);
+      onChanged();
+    } catch (err) {
+      setRowError(err instanceof Error ? err.message : "Couldn't delete that.");
+    }
+  }
+
   return (
     <div className="grp">
       <header className="grp__head">
@@ -120,7 +168,36 @@ function GroupCalendar({
             </li>
           ))}
         </ul>
+
+        {canManage && !formOpen && (
+          <button type="button" className="btn btn-primary grp__add" onClick={openAdd}>
+            + Add event or meeting to my plan
+          </button>
+        )}
+        {meMember !== null && editKey === null && (
+          <p className="grp__filter-hint text-muted">
+            To add or change your own events, open this group on the device where you made
+            your plan.
+          </p>
+        )}
       </header>
+
+      {formOpen && meMember && editKey && (
+        <CustomEventForm
+          planSlug={meMember.read_slug}
+          editKey={editKey}
+          windowStart={group.start_date}
+          windowEnd={group.end_date}
+          existing={editing}
+          onSaved={afterSave}
+          onCancel={() => {
+            setFormOpen(false);
+            setEditing(null);
+          }}
+        />
+      )}
+
+      {rowError && <p className="banner banner--error">{rowError}</p>}
 
       <div className="grp__filter">
         <span className="view-toggle__label">Show</span>
@@ -216,6 +293,9 @@ function GroupCalendar({
                       key={`custom-${item.custom.event_id}`}
                       owned={item}
                       timeLabel={clockLabel(itemStart(item))}
+                      canManage={canManage && item.owner.is_me}
+                      onEdit={() => openEdit(item)}
+                      onDelete={() => handleDelete(item)}
                     />
                   ),
                 )}
