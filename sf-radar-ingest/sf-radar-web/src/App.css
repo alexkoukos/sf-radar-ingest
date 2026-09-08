@@ -1040,6 +1040,19 @@
   font-weight: 600;
 }
 
+/* "Other ways to subscribe" disclosure under the one primary feed action */
+.hub-sub-more {
+  margin-top: var(--space-2);
+}
+.hub-sub-more > summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--color-accent);
+}
+.hub-sub-more[open] > summary {
+  margin-bottom: var(--space-2);
+}
+
 /* — copy field — */
 .copy-field {
   display: flex;

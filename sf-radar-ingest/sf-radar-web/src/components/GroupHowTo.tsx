@@ -19,9 +19,9 @@ function GroupHowTo() {
         <dl className="grp-howto__list">
           <dt>Subscribe vs. download</dt>
           <dd>
-            <strong>Subscribe</strong> (a URL) keeps updating as people change their plans — but
-            calendar apps only re-check every 8–24 hours, and you can’t force it. <strong>Download
-            .ics</strong> is a one-time frozen copy.
+            <strong>Subscribe</strong> (a URL) keeps updating as people change their plans, but
+            calendar apps only re-check every 8 to 24 hours, and you can’t force it.{" "}
+            <strong>Download .ics</strong> is a one-time frozen copy.
           </dd>
 
           <dt>Google Calendar</dt>
@@ -49,8 +49,8 @@ function GroupHowTo() {
           <dt>Timezone</dt>
           <dd>
             The feed carries <code>America/Los_Angeles</code>, so events land at the right local
-            moment wherever you are — nothing to set. (Only if you chose “SF times as-is” for your
-            own plan would you set your calendar app’s timezone to Los Angeles.)
+            moment wherever you are, with nothing to set. (Only if you chose “SF times as-is” for
+            your own plan would you set your calendar app’s timezone to Los Angeles.)
           </dd>
         </dl>
       </div>

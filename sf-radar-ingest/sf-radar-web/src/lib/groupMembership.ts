@@ -161,7 +161,7 @@ export async function updateGroupSettings(input: UpdateGroupSettingsInput): Prom
   if (!res.ok) {
     throw new Error(
       res.status === 429
-        ? "Too many changes — wait a few minutes and try again."
+        ? "Too many changes. Wait a few minutes and try again."
         : (body.error ?? `Couldn't save the changes (${res.status}).`),
     );
   }
@@ -177,7 +177,7 @@ export async function joinGroup(input: JoinGroupInput): Promise<JoinGroupRespons
     const b = (await login.json().catch(() => ({}))) as { error?: string };
     throw new Error(
       login.status === 429
-        ? "Too many attempts — wait a few minutes and try again."
+        ? "Too many attempts. Wait a few minutes and try again."
         : (b.error ?? "Wrong passphrase, or no group with that link."),
     );
   }

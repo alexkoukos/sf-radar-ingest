@@ -68,7 +68,7 @@ function NightStrip({ nights, eventsByNight, selected, onSelect, bookedNights }:
               type="button"
               role="tab"
               aria-selected={isSelected}
-              aria-label={`${dateLabel} — ${statusLabel}`}
+              aria-label={`${dateLabel}, ${statusLabel}`}
               className={`night-bar${isEmpty ? " night-bar--empty" : ""}${isSelected ? " night-bar--selected" : ""}${isBooked ? " night-bar--booked" : ""}`}
               style={!isEmpty && !isBooked ? ({ "--night-score": score } as CSSProperties) : undefined}
               onClick={() => onSelect(isSelected ? null : night.index)}

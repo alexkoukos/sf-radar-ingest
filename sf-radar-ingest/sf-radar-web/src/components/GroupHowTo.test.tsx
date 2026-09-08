@@ -24,7 +24,7 @@ describe("GroupHowTo", () => {
   });
 
   it("states the subscribe-vs-download and timezone caveats", () => {
-    expect(html).toMatch(/8.24 hours/);
+    expect(html).toMatch(/8 to 24 hours/);
     expect(html).toContain("America/Los_Angeles");
     expect(html).toMatch(/frozen copy/i);
   });

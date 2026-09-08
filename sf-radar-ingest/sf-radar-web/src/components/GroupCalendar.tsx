@@ -234,7 +234,7 @@ function GroupCalendar({
         </div>
         {meJoinOrder === null && (
           <span className="grp__filter-hint text-muted">
-            You haven't joined this group — open SF Radar to join.
+            You haven't joined this group. Open SF Radar to join.
           </span>
         )}
       </div>
@@ -279,7 +279,7 @@ function GroupCalendar({
               {!night.inWindow && <span className="grp__night-out-tag"> · outside the trip</span>}
             </h2>
             {night.items.length === 0 ? (
-              <p className="grp__night-none text-muted">—</p>
+              <p className="grp__night-none text-muted">No events</p>
             ) : (
               <ul className="grp__night-list">
                 {night.items.map((item) =>

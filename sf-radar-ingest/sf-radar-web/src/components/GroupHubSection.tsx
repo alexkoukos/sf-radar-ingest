@@ -183,7 +183,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
   }
 
   function forget() {
-    if (!window.confirm("Forget this group on this device? You stay a member — this only clears the local shortcut.")) {
+    if (!window.confirm("Forget this group on this device? You stay a member; this only clears the local shortcut.")) {
       return;
     }
     clearGroupMembership();
@@ -239,7 +239,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
       setCurPass("");
       setNewPass("");
       setSettingsOk(
-        "Passphrase changed. Share the new one in Slack — nobody is signed out, but new joiners will need it.",
+        "Passphrase changed. Share the new one in Slack. Nobody is signed out, but new joiners will need it.",
       );
     } catch (err) {
       setSettingsErr(err instanceof Error ? err.message : "Couldn't change the passphrase.");
@@ -253,14 +253,13 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
     return (
       <div className="hub-group">
         <p className="hub-group__lead">
-          You're in{" "}
-          <strong>{group.name}</strong> —{" "}
+          You're in <strong>{group.name}</strong>.{" "}
           <span
             className="hub-group__swatch"
             style={{ background: group.color }}
             aria-hidden="true"
           />
-          your colour, member #{group.joinOrder + 1}.
+          Your colour, member #{group.joinOrder + 1}.
         </p>
 
         {members && members.length > 0 && (
@@ -285,22 +284,17 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
 
         <CopyField label="Invite link" value={inviteUrl} />
         <p className="hub__note text-muted">
-          Share the link <strong>and</strong> the passphrase (the one you set) in Slack — the
-          passphrase isn't stored anywhere and can't be recovered.
+          Send the link and the passphrase together in Slack; the passphrase can't be recovered.
         </p>
 
         {feed && (
           <div className="hub-group__feed">
             <p className="hub__note text-muted">
-              <strong>Combined calendar feed</strong> — everyone's plans in one subscribe-able
-              calendar, each entry prefixed with the person's name. Meetings marked "Busy" show as{" "}
-              <em>Busy</em> only.
+              One calendar with everyone's plans, each entry titled with the person's name.
             </p>
-            <CopyField label="Feed (https)" value={feed.https} />
-            <CopyField label="Feed (webcal)" value={feed.webcal} />
             <div className="hub-form__actions">
               <a
-                className="btn btn-secondary"
+                className="btn btn-primary"
                 href={feed.google}
                 target="_blank"
                 rel="noreferrer"
@@ -308,20 +302,22 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
                 Add to Google Calendar ↗
               </a>
             </div>
-            <p className="hub__note text-muted">
-              A subscription keeps updating, but calendar apps only re-check every so often (Google
-              ~8–24h). It isn't instant.
-            </p>
+            <details className="hub-sub-more">
+              <summary>Other ways to subscribe</summary>
+              <CopyField label="Feed (https)" value={feed.https} />
+              <CopyField label="Feed (webcal)" value={feed.webcal} />
+              <p className="hub__note text-muted">
+                Updates are not instant. Calendar apps re-check every few hours (Google about 8 to
+                24h). Meetings marked "Busy" show as Busy only.
+              </p>
+            </details>
           </div>
         )}
 
         {freshPassphrase && (
           <div className="hub-group__passphrase">
             <CopyField label="Passphrase" value={freshPassphrase} />
-            <p className="hub__note">
-              Shown once. Copy it now and send it with the invite link — there's no way to get it
-              back.
-            </p>
+            <p className="hub__note">Shown once and never recoverable. Copy it now.</p>
           </div>
         )}
 
@@ -358,7 +354,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
               />
             </label>
             <label className="hub-field">
-              <span>New passphrase (4–64 chars)</span>
+              <span>New passphrase (4 to 64 chars)</span>
               <input
                 className="input"
                 type="text"
@@ -375,8 +371,8 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
               </button>
             </div>
             <p className="hub__note text-muted">
-              Changing it doesn't sign anyone out — it's only needed when someone new re-enters the
-              gate. It can't be recovered, so share the new one in Slack.
+              Changing it doesn't sign anyone out. New members will need the new one, and it can't
+              be recovered, so share it in Slack.
             </p>
           </form>
 
@@ -428,7 +424,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
             </label>
           </div>
           <label className="hub-field">
-            <span>Passphrase (4–64 chars — you'll share this in Slack)</span>
+            <span>Passphrase (4 to 64 chars, you'll share this in Slack)</span>
             <input className="input" type="text" value={gPass} onChange={(e) => setGPass(e.target.value)} maxLength={64} placeholder="e.g. blue fox river" />
           </label>
           <p className="hub__note text-muted">
