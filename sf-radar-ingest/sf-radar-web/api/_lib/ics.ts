@@ -256,3 +256,105 @@ export function buildPlanIcs(events: EventLike[], options: IcsOptions): IcsResul
 
   return { value: parts.join("\r\n"), count: vevents.length };
 }
+
+/**
+ * One row of what `group_feed_by_token()` returns — the server has already
+ * applied visibility: `private` rows are absent, `is_busy` rows arrive with
+ * title="Busy" and null location/note. This builder does NOT re-derive
+ * visibility; it only renders what it is given.
+ */
+export interface GroupFeedItem {
+  member_name: string;
+  join_order: number;
+  is_busy: boolean;
+  source: string; // "luma" | "custom"
+  source_id: string;
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  location: string | null;
+  note: string | null;
+  url_slug: string | null;
+}
+
+function groupFeedVevent(item: GroupFeedItem, dtstamp: string): string | null {
+  const start = new Date(item.starts_at);
+  if (Number.isNaN(start.getTime())) return null;
+  const parsedEnd = item.ends_at ? new Date(item.ends_at) : null;
+  const end =
+    parsedEnd && !Number.isNaN(parsedEnd.getTime())
+      ? parsedEnd
+      : new Date(start.getTime() + DEFAULT_DURATION_MS);
+
+  // SUMMARY is "[Member] Title" — for a busy row Title is already "Busy", so
+  // it reads "[Member] Busy" with no other detail. escapeText handles the
+  // name and title; prop() strips any stray CR/LF as a backstop.
+  const summary = `[${item.member_name}] ${item.title}`;
+
+  // Stable across polls: same (event, member) -> same UID, so Google updates
+  // in place instead of duplicating. The same Luma event attended by two
+  // members is intentionally two rows here (one per person) — a combined
+  // feed lists who is where, it does not merge.
+  const uid = `${escapeText(item.source)}-${escapeText(item.source_id)}-m${item.join_order}@sf-radar-group`;
+
+  const rows = [
+    "BEGIN:VEVENT",
+    prop("UID", uid),
+    prop("DTSTAMP", dtstamp),
+    dtProp("DTSTART", start, "tzid"),
+    dtProp("DTEND", end, "tzid"),
+    prop("SUMMARY", escapeText(summary)),
+  ];
+  if (item.location) rows.push(prop("LOCATION", escapeText(item.location)));
+
+  const descLines: string[] = [];
+  if (item.note) descLines.push(item.note);
+  if (item.source === "luma" && item.url_slug) descLines.push(`https://luma.com/${item.url_slug}`);
+  if (descLines.length) rows.push(prop("DESCRIPTION", escapeText(descLines.join("\n"))));
+  if (item.source === "luma" && item.url_slug) {
+    rows.push(prop("URL", escapeText(`https://luma.com/${item.url_slug}`)));
+  }
+  rows.push("END:VEVENT");
+  return rows.join("\r\n");
+}
+
+export interface GroupFeedIcsOptions {
+  /** X-WR-CALNAME, e.g. "Sept SF crew — SF Radar group". */
+  calName: string;
+}
+
+/**
+ * Combined group feed: every member's attending Luma events + their non-
+ * private custom events, one VEVENT per (member, event), each SUMMARY
+ * prefixed "[Member]". Always TZID mode (America/Los_Angeles) — a shared
+ * group calendar wants correct instants, and the per-member tz_mode isn't
+ * carried in the RPC. 0 rows still yields a valid empty VCALENDAR so an
+ * emptied group doesn't 500 a subscriber.
+ */
+export function buildGroupFeedIcs(items: GroupFeedItem[], options: GroupFeedIcsOptions): IcsResult {
+  const dtstamp = formatUtc(new Date());
+  const vevents = items
+    .map((item) => groupFeedVevent(item, dtstamp))
+    .filter((v): v is string => v !== null);
+
+  const parts = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    `PRODID:${PRODID}`,
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    prop("X-WR-CALNAME", escapeText(options.calName.trim() || "SF Radar group")),
+    "REFRESH-INTERVAL;VALUE=DURATION:PT12H",
+    "X-PUBLISHED-TTL:PT12H",
+    `X-WR-TIMEZONE:${LA_TZID}`,
+    // Per-event COLOR is intentionally omitted: a combined feed has no single
+    // member colour, Google ignores per-event COLOR anyway, and Apple colours
+    // by calendar (X-APPLE-CALENDAR-COLOR) not event. Per-member feeds (later)
+    // are where a distinct colour makes sense.
+    VTIMEZONE_LA,
+    ...vevents,
+    "END:VCALENDAR",
+    "",
+  ];
+  return { value: parts.join("\r\n"), count: vevents.length };
+}
