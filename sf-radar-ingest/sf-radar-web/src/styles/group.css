@@ -511,3 +511,30 @@
   padding: 0 3px;
   overflow-wrap: anywhere;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Mobile pass (<=480px). Group-page specifics; general mobile rules (16px
+   controls, 44px .btn, etc.) live in App.css and apply here too.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  /* — GP1: Edit / Delete were 2px apart and ~20px tall — */
+  .grp-card__manage {
+    gap: var(--space-2);
+    margin-left: auto;
+  }
+  .grp-card__manage .btn {
+    min-height: 40px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  /* — GP2: member-filter segments (~30px) — */
+  .seg-opt {
+    padding: 11px 14px;
+  }
+
+  /* — GP3: full-width gate button is a bigger, more obvious target — */
+  .grp-gate__form .btn {
+    align-self: stretch;
+  }
+}
