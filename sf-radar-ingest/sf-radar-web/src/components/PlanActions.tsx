@@ -43,11 +43,11 @@ interface PlanActionsProps {
 }
 
 /**
- * The hub below the night list: three plain sections in a fixed order —
- * GROUP (trip-group setup / status), SHARE MY PLAN (the read-only /plan/<slug>
- * link), CALENDAR (subscribe URLs + .ics download, with the timezone format
- * nested as a secondary setting). It carries an `id` so the "Share & calendar"
- * affordance up by the night counter can scroll to it.
+ * The hub at the top of the page, directly under the header and above the
+ * night list: three plain sections in a fixed order — GROUP (trip-group setup
+ * / status), SHARE MY PLAN (the read-only /plan/<slug> link), CALENDAR
+ * (subscribe URLs + .ics download, with the timezone format nested as a
+ * secondary setting). It keeps its `id` as a stable anchor target.
  */
 function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsProps) {
   const [tzMode, setTzMode] = useState<TzMode>(loadTzMode);
@@ -187,8 +187,12 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
   const sharePageUrl = shareSlug ? feedUrls(shareSlug).page : "";
 
   return (
-    <section id="plan-hub" className="plan-hub" aria-label="Group, share, and calendar">
-      <h2 className="plan-hub__title">Group · Share · Calendar</h2>
+    <details id="plan-hub" className="plan-hub">
+      <summary className="plan-hub__summary">
+        <span className="plan-hub__title">Group · Share · Calendar</span>
+        <span className="plan-hub__hint text-muted">trip group, share link, calendar feed</span>
+      </summary>
+      <div className="plan-hub__body" aria-label="Group, share, and calendar">
 
       {/* ── GROUP ─────────────────────────────────────────────────────── */}
       <section className="hub-sec">
@@ -312,7 +316,8 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
           </fieldset>
         </details>
       </section>
-    </section>
+      </div>
+    </details>
   );
 }
 

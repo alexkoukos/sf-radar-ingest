@@ -7,8 +7,12 @@ const MEETING_TYPE_LABEL: Record<string, string> = {
   coffee: "Coffee",
   one_on_one: "1:1",
   call: "Call",
+  breakfast: "Breakfast",
   lunch: "Lunch",
   dinner: "Dinner",
+  drinks: "Drinks",
+  walk: "Walk",
+  on_site: "On-site",
   other: "Meeting",
 };
 
@@ -67,6 +71,16 @@ function GroupCustomEventCard({
               <span>{timeLabel}</span>
               {custom.location && <span>{custom.location}</span>}
               {isMeeting && custom.with_company && <span>{custom.with_company}</span>}
+              {custom.url && (
+                <a
+                  className="grp-card__link"
+                  href={custom.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  Link ↗
+                </a>
+              )}
             </div>
             {custom.note && <p className="grp-card__note">{custom.note}</p>}
           </>

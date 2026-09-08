@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   DEFAULT_MEETING_DURATION_MIN,
+  isValidEventUrl,
   MEETING_TYPES,
   saveCustomEvent,
   type CustomEventDraft,
@@ -15,8 +16,12 @@ const MEETING_TYPE_LABEL: Record<MeetingType, string> = {
   coffee: "Coffee",
   one_on_one: "1:1",
   call: "Call",
+  breakfast: "Breakfast",
   lunch: "Lunch",
   dinner: "Dinner",
+  drinks: "Drinks",
+  walk: "Walk",
+  on_site: "On-site",
   other: "Other",
 };
 
@@ -83,6 +88,7 @@ function CustomEventForm({
   const [startTime, setStartTime] = useState(exStart?.time ?? "18:00");
   const [endTime, setEndTime] = useState(exEnd?.time ?? "");
   const [location, setLocation] = useState(ex?.location ?? "");
+  const [url, setUrl] = useState(ex?.url ?? "");
   const [note, setNote] = useState(ex?.note ?? "");
   const [withName, setWithName] = useState(ex?.with_name ?? "");
   const [withCompany, setWithCompany] = useState(ex?.with_company ?? "");
@@ -129,6 +135,10 @@ function CustomEventForm({
       setError("Give the event a title.");
       return;
     }
+    if (url.trim() && !isValidEventUrl(url)) {
+      setError("Enter a full link starting with http:// or https://");
+      return;
+    }
 
     const draft: CustomEventDraft = {
       eventId: ex?.event_id ?? null,
@@ -139,6 +149,7 @@ function CustomEventForm({
       endsAt,
       location,
       note,
+      url,
       withName,
       withCompany,
       meetingType: isMeeting ? meetingType : null,
@@ -280,6 +291,19 @@ function CustomEventForm({
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           maxLength={200}
+        />
+      </label>
+
+      <label className="ce-field">
+        <span>Link (optional)</span>
+        <input
+          className="input"
+          type="url"
+          inputMode="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          maxLength={500}
+          placeholder="https://…  (Zoom, Partiful, booking page)"
         />
       </label>
 

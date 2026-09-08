@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import CustomEventForm from "./CustomEventForm";
+import { isValidEventUrl } from "../lib/customEvent";
 import type { OwnedCustomEvent } from "../lib/groupMerge";
 
 const base = {
@@ -55,5 +56,37 @@ describe("CustomEventForm - defaults", () => {
     expect(html).toContain('value="Group dinner"');
     // Event kind -> no meeting fields
     expect(html).not.toContain("Who with");
+  });
+
+  it("offers an optional Link field, prefilled when editing", () => {
+    const html = renderToStaticMarkup(<CustomEventForm {...base} />);
+    expect(html).toContain("Link (optional)");
+
+    const withUrl: OwnedCustomEvent = {
+      kind: "custom",
+      owner: { join_order: 0, display_name: "Alekos", color: "#E69F00", is_me: true },
+      custom: {
+        event_id: "ce2",
+        kind: "meeting",
+        visibility: "shared",
+        title: "Sync",
+        starts_at: "2026-09-18T17:00:00.000Z",
+        url: "https://meet.example.com/abc",
+      },
+    };
+    const edit = renderToStaticMarkup(<CustomEventForm {...base} existing={withUrl} />);
+    expect(edit).toContain('value="https://meet.example.com/abc"');
+  });
+});
+
+describe("isValidEventUrl", () => {
+  it("accepts http/https URLs, rejects everything else", () => {
+    expect(isValidEventUrl("https://partiful.com/e/abc")).toBe(true);
+    expect(isValidEventUrl("http://x.test/y")).toBe(true);
+    expect(isValidEventUrl("  https://x.test  ")).toBe(true);
+    expect(isValidEventUrl("partiful.com/e/abc")).toBe(false);
+    expect(isValidEventUrl("mailto:a@b.com")).toBe(false);
+    expect(isValidEventUrl("javascript:alert(1)")).toBe(false);
+    expect(isValidEventUrl("")).toBe(false);
   });
 });

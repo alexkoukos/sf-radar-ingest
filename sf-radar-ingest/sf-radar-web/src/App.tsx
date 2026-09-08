@@ -325,14 +325,11 @@ function App() {
 
   const showSkeleton = loading && events.length === 0;
   const nightsPlannedCount = bookedNightIndices.size;
-  // The hub (GROUP / SHARE / CALENDAR) sits below the list whenever the
-  // dashboard has data — GROUP is useful before you've picked anything, and
-  // it's the only entry point to creating a group.
+  // The hub (GROUP / SHARE / CALENDAR) sits at the top, directly under the
+  // header and above the night list, whenever the dashboard has data — GROUP
+  // is useful before you've picked anything, and it's the only entry point to
+  // creating a group.
   const hubVisible = events.length > 0;
-
-  function scrollToHub() {
-    document.getElementById("plan-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   return (
     <main className="dashboard">
@@ -371,6 +368,14 @@ function App() {
       )}
       {!staleSince && error && events.length === 0 && (
         <p className="banner banner--error">Couldn't load events: {error}</p>
+      )}
+
+      {hubVisible && (
+        <PlanActions
+          attendingEvents={attendingEvents}
+          loggedNights={planLoggedNights}
+          startDate={startDateStr}
+        />
       )}
 
       <div className="hero">
@@ -434,11 +439,6 @@ function App() {
             <div className="hero__stat hero__stat--plan">
               {nightsPlannedCount} {nightsPlannedCount === 1 ? "night" : "nights"} planned
             </div>
-            {hubVisible && (
-              <button type="button" className="hero__hub-link" onClick={scrollToHub}>
-                Group · Share · Calendar ↓
-              </button>
-            )}
           </div>
         </div>
 
@@ -527,14 +527,6 @@ function App() {
           />
         ))}
       </ul>
-
-      {hubVisible && (
-        <PlanActions
-          attendingEvents={attendingEvents}
-          loggedNights={planLoggedNights}
-          startDate={startDateStr}
-        />
-      )}
 
       <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
 

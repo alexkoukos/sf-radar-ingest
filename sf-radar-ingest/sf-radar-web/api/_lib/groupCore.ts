@@ -125,6 +125,62 @@ export function validateJoin(body: unknown): Validated<JoinInput> {
   return { ok: true, value: { planSlug, editKey, displayName } };
 }
 
+export interface SettingsInput {
+  /** Cleaned new group name, or null when the name isn't being changed. */
+  name: string | null;
+  /** True when the body asked to change the passphrase. */
+  changePassphrase: boolean;
+  /** Normalized current passphrase — only meaningful when changePassphrase. */
+  currentPassphrase: string;
+  /** Normalized new passphrase — only meaningful when changePassphrase. */
+  newPassphrase: string;
+}
+
+/**
+ * POST /api/group/settings body: { name?, currentPassphrase?, newPassphrase? }.
+ * The caller must already hold a valid group-session cookie (the handler
+ * checks that); this only shapes the payload. At least one of `name` /
+ * `newPassphrase` must be present. Changing the passphrase requires the
+ * current one (the handler bcrypt-compares it) — a cheap guard against a
+ * left-open session. Length rules on the new passphrase match create; the
+ * current one is only checked for presence (a wrong length is just wrong).
+ */
+export function validateSettings(body: unknown): Validated<SettingsInput> {
+  if (!isPlainRecord(body)) return { ok: false, error: "Expected a JSON object." };
+
+  let name: string | null = null;
+  if (body.name !== undefined && body.name !== null) {
+    const cleaned = cleanText(body.name);
+    if (!cleaned || cleaned.length > NAME_MAX) {
+      return { ok: false, error: `Group name must be 1-${NAME_MAX} characters.` };
+    }
+    name = cleaned;
+  }
+
+  const changePassphrase = body.newPassphrase !== undefined && body.newPassphrase !== null;
+  let currentPassphrase = "";
+  let newPassphrase = "";
+  if (changePassphrase) {
+    newPassphrase = normalizePassphrase(body.newPassphrase);
+    const passErr = passphraseLengthError(newPassphrase);
+    if (passErr) return { ok: false, error: passErr };
+
+    currentPassphrase = normalizePassphrase(body.currentPassphrase);
+    if (currentPassphrase.length === 0) {
+      return { ok: false, error: "Enter your current passphrase to change it." };
+    }
+    if (newPassphrase === currentPassphrase) {
+      return { ok: false, error: "The new passphrase is the same as the current one." };
+    }
+  }
+
+  if (name === null && !changePassphrase) {
+    return { ok: false, error: "Nothing to change." };
+  }
+
+  return { ok: true, value: { name, changePassphrase, currentPassphrase, newPassphrase } };
+}
+
 /**
  * Map a Postgres error message raised by join_group into an HTTP status +
  * client-safe message. Anything unrecognised is a 502 (our problem, not the
