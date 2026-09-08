@@ -66,6 +66,13 @@ $$;
 -- or Java. last_seen_at within 24h is the ghost-event grace window: a
 -- transient single-target scrape failure self-heals within a run or two,
 -- while an event that's genuinely gone stops being seen and ages out.
+--
+-- city = 'San Francisco' is a hard geo gate: the curated topic calendars
+-- (ai-sf, genai-sf, bayareafoundersclub, ...) are subject-scoped, not
+-- location-scoped, so they pull in Peninsula/South Bay events and the odd
+-- NYC / Tokyo / Austin one. For a ~2-week visitor with no car, San
+-- Francisco proper is the whole product - so anything not tagged SF (incl.
+-- events Luma left with a null city) is out of the dashboard.
 CREATE OR REPLACE FUNCTION get_dashboard_events(p_days INTEGER)
 RETURNS SETOF events
 LANGUAGE sql STABLE AS $$
@@ -74,6 +81,7 @@ LANGUAGE sql STABLE AS $$
     WHERE starts_at >= la_window_start()
         AND starts_at < la_window_start() + (p_days::text || ' days')::interval
         AND last_seen_at >= now() - INTERVAL '24 hours'
+        AND city = 'San Francisco'
     ORDER BY score DESC NULLS LAST, starts_at ASC;
 $$;
 
