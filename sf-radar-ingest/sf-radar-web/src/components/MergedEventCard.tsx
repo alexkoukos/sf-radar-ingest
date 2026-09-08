@@ -19,6 +19,10 @@ function MergedEventCard({
   const { event, attendees } = merged;
   const shared = attendees.length >= 2;
   const gated = isGated(event);
+  // Spelled-out attendee names — the legend and chip tooltips also carry
+  // them, but a tooltip is dead weight on a touch screen and the demo is a
+  // phone. These are member display names (ours), never a meeting's "who".
+  const attendeeNames = attendees.map((a) => (a.is_me ? "You" : a.display_name)).join(", ");
 
   return (
     <li className={`card grp-card grp-card--luma${shared ? " grp-card--shared" : ""}`}>
@@ -50,8 +54,12 @@ function MergedEventCard({
           {event.host_name && <span>{event.host_name}</span>}
         </div>
 
-        <div className="grp-card__foot">
+        <div className="grp-card__attendees">
           <MemberChips members={attendees} />
+          <span className="grp-card__attendee-names">{attendeeNames}</span>
+        </div>
+
+        <div className="grp-card__foot">
           <span className="grp-card__tags">
             <span className={event.is_free ? "tag tag-accent" : "tag tag-neutral"}>
               {formatPrice(event)}

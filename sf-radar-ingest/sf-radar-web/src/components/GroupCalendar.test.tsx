@@ -79,7 +79,13 @@ function occurrences(haystack: string, needle: string): number {
 }
 
 describe("GroupCalendar - merged shared-event rendering", () => {
-  const html = renderToStaticMarkup(<GroupCalendar view={VIEW} meJoinOrder={1} />);
+  const html = renderToStaticMarkup(
+    <GroupCalendar
+      view={VIEW}
+      meMember={VIEW.members.find((m) => m.join_order === 1) ?? null}
+      onChanged={() => {}}
+    />,
+  );
 
   it("renders the shared event exactly once despite two members attending", () => {
     expect(occurrences(html, SHARED_TITLE)).toBe(1);
@@ -90,14 +96,16 @@ describe("GroupCalendar - merged shared-event rendering", () => {
     expect(html).toMatch(/2 of the group going/);
   });
 
-  it("shows both members on that one card (initials A and M)", () => {
-    // The shared card carries a member-chip per attendee.
+  it("shows both members on that one card: chips (A, M) AND spelled-out names", () => {
     const sharedCardStart = html.indexOf("grp-card--shared");
     const sharedCardEnd = html.indexOf("</li>", sharedCardStart);
     const sharedCard = html.slice(sharedCardStart, sharedCardEnd);
     expect(occurrences(sharedCard, "member-chip")).toBeGreaterThanOrEqual(2);
     expect(sharedCard).toContain(">A<");
     expect(sharedCard).toContain(">M<");
+    // meJoinOrder = 1 (Mara), so the other attendee is spelled out and self is "You".
+    expect(sharedCard).toContain("grp-card__attendee-names");
+    expect(sharedCard).toMatch(/Alekos, You|You, Alekos/);
   });
 
   it("keeps the solo event as its own single row", () => {

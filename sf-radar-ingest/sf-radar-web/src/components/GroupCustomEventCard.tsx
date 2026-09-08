@@ -24,9 +24,15 @@ const MEETING_TYPE_LABEL: Record<string, string> = {
 function GroupCustomEventCard({
   owned,
   timeLabel,
+  canManage = false,
+  onEdit,
+  onDelete,
 }: {
   owned: OwnedCustomEvent;
   timeLabel: string;
+  canManage?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   const { owner, custom } = owned;
   const isBusy = custom.kind === "busy";
@@ -69,6 +75,16 @@ function GroupCustomEventCard({
         <div className="grp-card__foot">
           <MemberChips members={[owner]} size="sm" />
           {isBusy && <span className="grp-card__meta">{timeLabel}</span>}
+          {canManage && (
+            <span className="grp-card__manage">
+              <button type="button" className="btn btn-ghost" onClick={onEdit}>
+                Edit
+              </button>
+              <button type="button" className="btn btn-ghost grp-card__delete" onClick={onDelete}>
+                Delete
+              </button>
+            </span>
+          )}
         </div>
       </div>
     </li>

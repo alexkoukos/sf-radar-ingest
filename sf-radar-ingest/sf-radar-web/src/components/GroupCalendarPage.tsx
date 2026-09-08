@@ -15,19 +15,28 @@ function GroupCalendarPage({ slug }: { slug: string }) {
   const [result, setResult] = useState<GroupViewResult | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetchGroupView(slug).then((r) => {
-      if (!cancelled) {
-        setResult(r);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
+  // withSkeleton: first load and gate->unlock show the skeleton; a refetch
+  // after the viewer adds/edits/deletes their own event refreshes in place.
+  const load = useCallback(
+    (withSkeleton = true) => {
+      let cancelled = false;
+      if (withSkeleton) setLoading(true);
+      fetchGroupView(slug).then((r) => {
+        if (!cancelled) {
+          setResult(r);
+          setLoading(false);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    },
+    [slug],
+  );
+
+  const reload = useCallback(() => {
+    load(false);
+  }, [load]);
 
   useEffect(() => load(), [load]);
 
@@ -61,10 +70,12 @@ function GroupCalendarPage({ slug }: { slug: string }) {
         </ul>
       )}
 
-      {!loading && result?.status === "gate" && <GroupGate slug={slug} onUnlocked={load} />}
+      {!loading && result?.status === "gate" && (
+        <GroupGate slug={slug} onUnlocked={() => load()} />
+      )}
 
       {!loading && result?.status === "ok" && (
-        <GroupCalendar view={result.view} meJoinOrder={result.meMember?.join_order ?? null} />
+        <GroupCalendar view={result.view} meMember={result.meMember} onChanged={reload} />
       )}
 
       {!loading && result?.status === "notfound" && (

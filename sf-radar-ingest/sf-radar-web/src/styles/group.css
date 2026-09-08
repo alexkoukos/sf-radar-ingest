@@ -241,10 +241,28 @@
   color: color-mix(in srgb, var(--color-text) 70%, transparent);
 }
 
+.grp-card__attendees {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.grp-card__attendee-names {
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.grp-card--shared .grp-card__attendee-names {
+  color: var(--color-accent-900);
+}
+
 .grp-card__foot {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 2px;
@@ -288,6 +306,108 @@
 
 .member-chip--me {
   border-color: var(--color-text);
+}
+
+/* — add / manage custom events — */
+.grp__add {
+  margin-top: var(--space-3);
+}
+
+.grp-card__manage {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.grp-card__manage .btn {
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.grp-card__delete {
+  color: var(--color-accent-700);
+}
+
+/* — custom event form — */
+.ce-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+  padding: var(--space-4);
+  border: 2px dashed var(--color-divider);
+  background: var(--color-surface);
+}
+
+.ce-form__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: 800 14px var(--font-heading);
+}
+
+.ce-form fieldset {
+  border: 1px solid var(--color-divider);
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ce-form legend {
+  font: 800 10px var(--font-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  padding: 0 4px;
+}
+
+.ce-form__kind {
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  gap: var(--space-3) !important;
+}
+
+.ce-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font: 600 12px var(--font-body);
+}
+
+.ce-form__meeting,
+.ce-form__when {
+  display: grid;
+  gap: var(--space-2);
+}
+
+@media (min-width: 520px) {
+  .ce-form__when {
+    grid-template-columns: 1.2fr 1fr 1fr;
+  }
+  .ce-form__meeting {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ce-form__hint {
+  margin: -4px 0 0;
+  font-size: 11px;
+}
+
+.ce-form__vis-opt {
+  align-items: start;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ce-form__vis-opt .dot {
+  margin-top: 2px;
+}
+
+.ce-form__error {
+  margin: 0;
 }
 
 /* — passphrase gate — */
