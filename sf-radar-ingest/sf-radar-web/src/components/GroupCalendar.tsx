@@ -15,6 +15,7 @@ import { readableInk } from "../lib/memberColor";
 import MergedEventCard from "./MergedEventCard";
 import GroupCustomEventCard from "./GroupCustomEventCard";
 import CustomEventForm from "./CustomEventForm";
+import GroupHowTo from "./GroupHowTo";
 
 type FilterMode = "everyone" | "some" | "me";
 
@@ -304,6 +305,8 @@ function GroupCalendar({
           </li>
         ))}
       </ol>
+
+      <GroupHowTo />
     </div>
   );
 }
