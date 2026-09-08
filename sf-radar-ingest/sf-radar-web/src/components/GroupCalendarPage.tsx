@@ -56,7 +56,7 @@ function GroupCalendarPage({ slug }: { slug: string }) {
   return (
     <main className="dashboard grp-page">
       <nav className="nav">
-        <span className="nav-brand">SF RADAR</span>
+        <a className="nav-brand" href="/">SF RADAR</a>
         <a className="btn btn-secondary nav__log" href="/">
           Open SF Radar
         </a>

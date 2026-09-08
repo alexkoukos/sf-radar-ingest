@@ -125,7 +125,7 @@ function SharedPlanPage({ slug }: { slug: string }) {
   return (
     <main className="dashboard shared-plan">
       <nav className="nav">
-        <span className="nav-brand">SF RADAR</span>
+        <a className="nav-brand" href="/">SF RADAR</a>
         <a className="btn btn-secondary nav__log" href="/">
           Open SF Radar
         </a>

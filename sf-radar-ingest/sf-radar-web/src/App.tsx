@@ -334,7 +334,7 @@ function App() {
   return (
     <main className="dashboard">
       <nav className="nav">
-        <span className="nav-brand">SF RADAR</span>
+        <a className="nav-brand" href="/">SF RADAR</a>
         {group && (
           <a className="nav__group" href={`/group/${group.slug}`} title={`Group: ${group.name}`}>
             <span className="nav__group-dot" style={{ background: group.color }} aria-hidden="true" />
