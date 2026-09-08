@@ -48,7 +48,7 @@ function SubscribePanel({ slug, includePageLink }: SubscribePanelProps) {
       </div>
       <p className="subscribe-panel__note text-muted">
         A subscription <strong>keeps updating</strong> as the plan changes, but calendar apps only
-        re-check every so often (Google roughly every 8 to 24h; Outlook can take 24h+; Apple is
+        recheck every so often (Google roughly every 8 to 24h; Outlook can take 24h or more; Apple is
         configurable). It is not instant. For a frozen copy of the plan as it is right now, use
         “Download .ics”.
       </p>

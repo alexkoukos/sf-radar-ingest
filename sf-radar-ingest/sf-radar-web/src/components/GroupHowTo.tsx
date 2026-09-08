@@ -20,8 +20,8 @@ function GroupHowTo() {
           <dt>Subscribe vs. download</dt>
           <dd>
             <strong>Subscribe</strong> (a URL) keeps updating as people change their plans, but
-            calendar apps only re-check every 8 to 24 hours, and you can’t force it.{" "}
-            <strong>Download .ics</strong> is a one-time frozen copy.
+            calendar apps only recheck every 8 to 24 hours, and you can’t force it.{" "}
+            <strong>Download .ics</strong> is a frozen copy taken once.
           </dd>
 
           <dt>Google Calendar</dt>
@@ -34,7 +34,7 @@ function GroupHowTo() {
           <dt>Apple Calendar</dt>
           <dd>
             <strong>Mac:</strong> <em>File → New Calendar Subscription</em> → paste → <em>Subscribe</em>{" "}
-            → set an auto-refresh interval.
+            → set how often it refreshes.
             <br />
             <strong>iPhone / iPad:</strong> <em>Calendars → Add Calendar → Add Subscription
             Calendar</em> → paste → <em>Find</em>.
@@ -49,8 +49,8 @@ function GroupHowTo() {
           <dt>Timezone</dt>
           <dd>
             The feed carries <code>America/Los_Angeles</code>, so events land at the right local
-            moment wherever you are, with nothing to set. (Only if you chose “SF times as-is” for
-            your own plan would you set your calendar app’s timezone to Los Angeles.)
+            moment wherever you are, with nothing to set. (Only if you chose “SF times unchanged”
+            for your own plan would you set your calendar app’s timezone to Los Angeles.)
           </dd>
         </dl>
       </div>

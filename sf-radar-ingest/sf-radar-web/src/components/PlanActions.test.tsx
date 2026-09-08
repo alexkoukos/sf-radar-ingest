@@ -38,7 +38,7 @@ describe("PlanActions hub - section layout", () => {
     expect(html).toMatch(/<details class="tz-toggle-wrap"/);
     // both radio options still present
     expect(html).toContain("San Francisco timezone");
-    expect(html).toContain("Show SF times as-is");
+    expect(html).toContain("Show SF times unchanged");
   });
 
   it("shows 'Create a share link' before any link exists", () => {

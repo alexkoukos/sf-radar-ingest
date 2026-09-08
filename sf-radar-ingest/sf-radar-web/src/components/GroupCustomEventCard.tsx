@@ -12,7 +12,7 @@ const MEETING_TYPE_LABEL: Record<string, string> = {
   dinner: "Dinner",
   drinks: "Drinks",
   walk: "Walk",
-  on_site: "On-site",
+  on_site: "On site",
   other: "Meeting",
 };
 

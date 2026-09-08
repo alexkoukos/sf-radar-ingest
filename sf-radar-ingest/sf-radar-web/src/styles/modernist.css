@@ -12,7 +12,7 @@
   --color-surface: #FFFFFF;
   --color-text: #1A1A1A;
   --color-text-secondary: #6B6B66;
-  --color-accent: #C2410C;              /* burnt orange; 5.0:1 on --color-bg, 5.2:1 on white */
+  --color-accent: #CB460D;              /* burnt orange, lightened one notch (Sept 2026). 4.5:1 on --color-bg, 4.7:1 on white. Near the AA floor, do not lighten further. */
   --color-accent-2: #e15b47;            /* unchanged coral — keeps RSVP tags distinct from the primary */
   --color-divider: #E5E5E0;
 
@@ -54,8 +54,8 @@
   /* WCAG AA contrast (verified against both grounds):
        #1A1A1A text        on #FAFAF8 = 15.9:1   on #FFFFFF = 16.6:1
        #6B6B66 secondary   on #FAFAF8 =  5.2:1   on #FFFFFF =  5.4:1
-       #C2410C accent/link on #FAFAF8 =  5.0:1   on #FFFFFF =  5.2:1
-       #FAFAF8 on #C2410C button      =  5.0:1
+       #CB460D accent/link on #FAFAF8 =  4.5:1   on #FFFFFF =  4.7:1
+       #FAFAF8 on #CB460D button      =  4.5:1
        #9A3412 (-800) on #FFF1E6 (-100) tint     =  6.6:1
      #E5E5E0 divider is a decorative hairline, not held to a text ratio. */
 

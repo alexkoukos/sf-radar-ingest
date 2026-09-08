@@ -21,7 +21,7 @@ const MEETING_TYPE_LABEL: Record<MeetingType, string> = {
   dinner: "Dinner",
   drinks: "Drinks",
   walk: "Walk",
-  on_site: "On-site",
+  on_site: "On site",
   other: "Other",
 };
 
@@ -107,7 +107,7 @@ function CustomEventForm({
   }
 
   const titlePlaceholder = useMemo(
-    () => (isMeeting ? "e.g. Coffee with Sarah Chen (blank to auto-name)" : "e.g. Group dinner"),
+    () => (isMeeting ? "e.g. Coffee with Sarah Chen (leave blank and we name it)" : "e.g. Group dinner"),
     [isMeeting],
   );
 
