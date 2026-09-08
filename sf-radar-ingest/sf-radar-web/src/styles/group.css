@@ -447,3 +447,57 @@
 .grp-gate__error {
   margin-top: var(--space-3);
 }
+
+/* — how-to-subscribe panel — */
+.grp-howto {
+  margin: var(--space-6) 0 var(--space-4);
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+.grp-howto > summary {
+  padding: var(--space-3);
+  cursor: pointer;
+  font: 800 12px var(--font-heading);
+  letter-spacing: 0.04em;
+}
+.grp-howto > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+.grp-howto__body {
+  padding: 0 var(--space-3) var(--space-3);
+}
+.grp-howto__lead {
+  margin: 0 0 var(--space-3);
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+}
+.grp-howto__list {
+  margin: 0;
+  display: grid;
+  gap: var(--space-2) var(--space-3);
+}
+@media (min-width: 560px) {
+  .grp-howto__list {
+    grid-template-columns: 8rem 1fr;
+  }
+}
+.grp-howto__list dt {
+  font: 800 11px var(--font-heading);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding-top: 2px;
+}
+.grp-howto__list dd {
+  margin: 0 0 var(--space-2);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.grp-howto__list code {
+  font-size: 11px;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  padding: 0 3px;
+  overflow-wrap: anywhere;
+}

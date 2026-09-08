@@ -201,6 +201,22 @@ Both Attending toggles and logged nights live in a single object in `localStorag
 
 Cached events load instantly from `localStorage` on open. If a live fetch fails and a cache exists, the last good data stays on screen with a timestamped "stale" banner instead of a blank page or a crash. A hard error banner only shows if there's no cache at all — a true first-load failure with nothing to fall back to.
 
+## Trip groups
+
+An optional layer for people coordinating a trip together. From the **Group · Share · Calendar** section below the night list you can **create a group** (it adopts your current plan as member #1) or **join one** with an invite link. A group has an unguessable link plus a passphrase — the link alone shows nothing; the passphrase gate is enforced server-side by the Vercel functions in `api/group/`, and the group tables are unreachable with the anon key (RLS enabled, zero policies). No accounts.
+
+The group calendar at `/group/<slug>` overlays every member's plan night-by-night, in per-member colors from a CVD-safe palette. An event two or more members are attending renders **once** with stacked member indicators, not one row per person. Members can add their own custom events and 1:1 meetings; a meeting defaults to **busy** visibility, which shows the rest of the group only an anonymous "Busy" block — no title, no name — with that redaction done in SQL, before the data leaves Postgres.
+
+### Subscribing to the combined group calendar
+
+Each member has a revocable feed token; the combined feed URL (`…/group/feed/<token>.ics`) is one calendar with **everyone's** events, each titled `[Name] …`. Menu paths below were checked against current vendor docs (Sept 2026) and do drift:
+
+- **Subscribe vs. download** — a subscription URL keeps updating as people change plans, but calendar apps only re-check every **8–24 hours** and you can't force it. "Download .ics" is a one-time frozen copy.
+- **Google Calendar** (browser only, not the phone app) — left sidebar → *Other calendars* → *＋* → *From URL* → paste the `https://…/group/feed/…ics` link → *Add calendar*.
+- **Apple Calendar** — Mac: *File → New Calendar Subscription* → paste → *Subscribe* → set an auto-refresh interval. iPhone/iPad: *Calendars → Add Calendar → Add Subscription Calendar* → paste → *Find*.
+- **Outlook** (new Outlook, web or desktop) — *Add calendar → Subscribe from web* → paste → name it.
+- **Timezone** — the feed carries `America/Los_Angeles`, so events land at the right local moment wherever you are; nothing to set. Only if you chose "SF times as-is" for your own plan would you set your calendar app's timezone to Los Angeles.
+
 ## Running locally
 
 ```
