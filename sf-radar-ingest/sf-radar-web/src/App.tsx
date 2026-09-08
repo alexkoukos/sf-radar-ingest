@@ -11,6 +11,7 @@ import {
 import { loadCachedEvents, saveCachedEvents } from "./lib/storage";
 import { createLoggedId, loadLocalPlan, saveLocalPlan, type LocalPlan } from "./lib/localPlan";
 import { loadStartDate, saveStartDate } from "./lib/startDate";
+import { loadGroupMembership, type GroupMembership } from "./lib/groupMembership";
 import { laZoneAbbrev } from "./lib/eventFormat";
 import { isFreeAndOpen, isNewcomerFriendly } from "./lib/scoreBreakdown";
 import NightStrip, { STRONG_SCORE_THRESHOLD } from "./components/NightStrip";
@@ -76,10 +77,12 @@ function App() {
   const [plan, setPlan] = useState<LocalPlan>({ attending: {}, logged: [] });
   const [startDateStr, setStartDateStr] = useState<string | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
+  const [group, setGroup] = useState<GroupMembership | null>(null);
 
   useEffect(() => {
     setPlan(loadLocalPlan());
     setStartDateStr(loadStartDate());
+    setGroup(loadGroupMembership());
   }, []);
 
   useEffect(() => {
@@ -315,11 +318,25 @@ function App() {
 
   const showSkeleton = loading && events.length === 0;
   const nightsPlannedCount = bookedNightIndices.size;
+  // The hub (GROUP / SHARE / CALENDAR) sits below the list whenever the
+  // dashboard has data — GROUP is useful before you've picked anything, and
+  // it's the only entry point to creating a group.
+  const hubVisible = events.length > 0;
+
+  function scrollToHub() {
+    document.getElementById("plan-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   return (
     <main className="dashboard">
       <nav className="nav">
         <span className="nav-brand">SF RADAR</span>
+        {group && (
+          <a className="nav__group" href={`/group/${group.slug}`} title={`Group: ${group.name}`}>
+            <span className="nav__group-dot" style={{ background: group.color }} aria-hidden="true" />
+            <span className="nav__group-name">{group.name}</span>
+          </a>
+        )}
         <button
           type="button"
           className="btn btn-primary nav__log"
@@ -410,6 +427,11 @@ function App() {
             <div className="hero__stat hero__stat--plan">
               {nightsPlannedCount} {nightsPlannedCount === 1 ? "night" : "nights"} planned
             </div>
+            {hubVisible && (
+              <button type="button" className="hero__hub-link" onClick={scrollToHub}>
+                Group · Share · Calendar ↓
+              </button>
+            )}
           </div>
         </div>
 
@@ -499,7 +521,7 @@ function App() {
         ))}
       </ul>
 
-      {attendingEvents.length > 0 && (
+      {hubVisible && (
         <PlanActions
           attendingEvents={attendingEvents}
           loggedNights={planLoggedNights}
