@@ -67,12 +67,20 @@ $$;
 -- transient single-target scrape failure self-heals within a run or two,
 -- while an event that's genuinely gone stops being seen and ages out.
 --
--- city = 'San Francisco' is a hard geo gate: the curated topic calendars
--- (ai-sf, genai-sf, bayareafoundersclub, ...) are subject-scoped, not
--- location-scoped, so they pull in Peninsula/South Bay events and the odd
--- NYC / Tokyo / Austin one. For a ~2-week visitor with no car, San
--- Francisco proper is the whole product - so anything not tagged SF (incl.
--- events Luma left with a null city) is out of the dashboard.
+-- Geo gate: the curated topic calendars (ai-sf, genai-sf,
+-- bayareafoundersclub, theaibuildersdev, ...) are subject-scoped, not
+-- location-scoped, so the raw feed carries New York / LA / Tokyo / Seoul /
+-- Austin events. Keep the greater Bay Area + Silicon Valley (roughly a
+-- 1.5-hour radius of SF: San Francisco, the Peninsula, South Bay, East Bay,
+-- Marin, up to Napa/Santa Rosa, down to San Jose/Santa Cruz), drop
+-- everything else.
+--   * events WITH coordinates: must fall in the Bay Area bounding box
+--     (lat 36.85..38.5, lon -122.9..-121.4 - excludes LA 34.0, San Diego,
+--     Sacramento/Tahoe, Fresno, and anything out of state/country).
+--   * events WITHOUT coordinates: kept only if nothing contradicts a Bay
+--     Area origin - region is null or 'California', country is null or 'US'.
+--     A fully untagged event is a coin flip; we keep it (recall over
+--     precision) rather than name-matching, which the project forbids.
 CREATE OR REPLACE FUNCTION get_dashboard_events(p_days INTEGER)
 RETURNS SETOF events
 LANGUAGE sql STABLE AS $$
@@ -81,7 +89,14 @@ LANGUAGE sql STABLE AS $$
     WHERE starts_at >= la_window_start()
         AND starts_at < la_window_start() + (p_days::text || ' days')::interval
         AND last_seen_at >= now() - INTERVAL '24 hours'
-        AND city = 'San Francisco'
+        AND (
+            (latitude BETWEEN 36.85 AND 38.5 AND longitude BETWEEN -122.9 AND -121.4)
+            OR (
+                latitude IS NULL
+                AND (region IS NULL OR region = 'California')
+                AND (country_code IS NULL OR country_code = 'US')
+            )
+        )
     ORDER BY score DESC NULLS LAST, starts_at ASC;
 $$;
 
