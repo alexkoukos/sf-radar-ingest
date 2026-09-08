@@ -2,7 +2,34 @@
 
 Written for a session with no prior context. Read this and `CLAUDE.md` before touching anything.
 
-The foundation is done and verified. The next unit of work is the **group trip-coordination feature** (spec at the bottom). Nothing in the group feature needs an ingestion, scoring, or Java change.
+The foundation is done and verified. The **group trip-coordination feature** (spec at the bottom) is now **functionally complete** — see the checkpoint below. The active phase is **UI / UX polish** on top of it.
+
+---
+
+## CHECKPOINT — group feature built (tag `group-feature-complete`, commit `5acbbcc`)
+
+Parts **1, 2, 3, 5, 6, 8** of the group spec are shipped to `master`, deployed on Vercel, and each was proven with live requests against production (curl + headless-browser walkthroughs). 131 web tests green; `tsc` / `oxlint` / `vite build` clean; `grep dist/` for secrets clean on every build. **No migration was run** — migrations 003 / 004 / 005 already had every table and function; `schema.sql` was touched only for the geo gate (below).
+
+| Part | What | Key files | Commit |
+|---|---|---|---|
+| 1 | `create` / `login` / `join` / `view` endpoints + server-enforced passphrase gate | `api/group/*.ts`, `api/_lib/{groupCore,groupToken,groupHttp,supabaseAdmin,passphrase,groupIds,groupText}.ts` | `284b04b` |
+| 2 | Group calendar view at `/group/<slug>` — merged shared events (one card + stacked member chips), per-member colors, me/some/everyone filter, night-by-night | `src/components/{GroupCalendarPage,GroupCalendar,GroupGate,MergedEventCard,GroupCustomEventCard,MemberChips}.tsx`, `src/lib/{groupView,groupMerge,memberColor}.ts` | `9e049d6` |
+| 3 | Custom events + meetings, `busy` default for meetings, visibility enforced in `group_view` (SQL) | `src/components/CustomEventForm.tsx`, `src/lib/{customEvent,laTime}.ts` | `ee344d0` |
+| 5 | Below-list hub restructured into GROUP / SHARE / CALENDAR; create/join group flows; nav group chip; scroll affordance | `src/components/{PlanActions,GroupHubSection,CopyField}.tsx`, `src/lib/groupMembership.ts` | `72f933f`, `c6002ec` |
+| 6 | Combined group feed `GET /group/feed/<token>.ics` — `[Name]`-prefixed, `[Name] Busy` redaction, stable per-(member,event) UIDs | `api/group/feed/[token].ts`, `api/_lib/groupFeed.ts`, `buildGroupFeedIcs` in `api/_lib/ics.ts` | `637d7bc`, `47b21ae` |
+| 8 | "How to subscribe" panel on the group page + README "Trip groups" section (menu paths verified vs vendor docs Sept 2026) | `src/components/GroupHowTo.tsx`, `README.md` | `26d9aa4` |
+
+**Also in this checkpoint, NOT part of the group feature:** `get_dashboard_events` gained a geo gate (`schema.sql`, commits `6d610b7` → `5acbbcc`) — keeps the greater Bay Area (bounding box `lat 36.85–38.5`, `lon -122.9…-121.4`, plus null-coord events whose region/country don't contradict a Bay origin), drops LA / Sacramento / out-of-state / out-of-country. The topic calendars are subject-scoped, not geo-scoped, so ~12 of ~277 live events were New York / Tokyo / Singapore / Austin / Florence.
+
+**Deferred by design — do NOT build:** passphrase rotation / token versioning; the optional grid view; per-member feeds + per-member Google-color buttons; linking a meeting's "who" (`with_member_id`) to a group member; a rotate/revoke-feed-token button (the `rotate_feed_token` RPC exists, no UI).
+
+**Still owed by the human (service-role SQL editor / a real device), tracked so a fresh session doesn't re-derive it:**
+1. Run the geo-gate `CREATE OR REPLACE FUNCTION get_dashboard_events(...)` (the `schema.sql` version) — the 6h ingest cron re-applies it anyway, so this only matters for immediacy.
+2. `DELETE FROM groups WHERE group_slug IN (...)` for the throwaway proof groups: `f9d9b79a2a15799ff088ddded2dcc692`, `9b19f63b6fc2fe97ff057a3aab7d8e9e`, `e7dd448dc021960ac54fd48d10481240`, `cd3d84b8e5fc22aa79d1be659574a5dd`, `bf3f3c8a2153df1f4395ed9cf57a9d7d`, `b08cf7dbf2759c0e62433b439f5f6265` (some may already be gone).
+3. Delete two junk plans: slug `0890eaf4206729edc49ae00b33f16b36` (my Part 5 headless orphan) and `zzztestslugthatislongenough` (pre-existing manual test).
+4. Subscribe the combined feed in a real Google Calendar and confirm it propagates on the next poll — validated here only by `ical.js` parse + live curl.
+
+Deferred cleanup #1 (drop `legacy-locked` plan rows + tighten `plans_edit_key_shape` to `^[a-f0-9]{32,64}$`) was **run by the human** at this checkpoint — done. Deferred cleanup #2 (other leftover manual-test plan rows) is partly done via item 3 above; a few group-less `plans` rows with real content were left in place deliberately.
 
 ---
 
