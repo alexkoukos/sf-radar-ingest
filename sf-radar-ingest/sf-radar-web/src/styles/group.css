@@ -1,0 +1,329 @@
+/* Group calendar view (/group/<slug>). Layout only; tokens + .btn/.card/.tag
+   /.seg/.chip come from styles/modernist.css. Built mobile-first — the demo
+   is a phone handed across a table. */
+
+.grp-page {
+  padding-bottom: var(--space-8);
+}
+
+/* — header / legend — */
+.grp__head {
+  padding: var(--space-6) 0 var(--space-4);
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.grp__title {
+  margin: 4px 0 2px;
+  font-size: clamp(24px, 6vw, 38px);
+}
+
+.grp__sub {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+}
+
+.grp__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.grp__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grp__legend-dot {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+}
+
+.grp__legend-dot--inline {
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+}
+
+/* — member filter — */
+.grp__filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.grp__filter-hint {
+  font-size: 11px;
+  flex-basis: 100%;
+}
+
+.grp__member-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: var(--space-3);
+}
+
+.grp__member-toggles .chip {
+  display: inline-flex;
+  align-items: center;
+}
+
+.grp__empty {
+  margin: var(--space-4) 0;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+/* — night list — */
+.grp__nights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.grp__night {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.grp__night--empty {
+  padding: var(--space-2) 0;
+}
+
+.grp__night--out .grp__night-head {
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.grp__night-head {
+  margin: 0 0 var(--space-3);
+  font-size: clamp(15px, 4vw, 19px);
+}
+
+.grp__night--empty .grp__night-head {
+  margin-bottom: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-text) 45%, transparent);
+}
+
+.grp__night-out-tag {
+  font-size: 12px;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+
+.grp__night-none {
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+
+.grp__night-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 680px) {
+  .grp__night-list {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  }
+}
+
+/* — event card (shared Luma + custom) — */
+.grp-card {
+  position: relative;
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) + 8px);
+  gap: var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.grp-card__bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.grp-card__bar-seg {
+  flex: 1 1 0;
+  min-height: 4px;
+}
+
+.grp-card--shared {
+  border: 2px solid var(--color-accent);
+  background: var(--color-accent-100);
+}
+
+.grp-card--custom {
+  border: 2px dashed var(--color-divider);
+}
+
+.grp-card--busy {
+  background: color-mix(in srgb, var(--color-text) 4%, var(--color-surface));
+}
+
+.grp-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.grp-card__kicker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grp-card__custom-tag {
+  font: 800 9px var(--font-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+}
+
+.grp-card__owner-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.grp-card__shared-flag {
+  color: var(--color-accent-800);
+  font-weight: 700;
+}
+
+.grp-card__title {
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.grp-card__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.grp-card__title a:hover {
+  text-decoration: underline;
+}
+
+.grp-card__title--muted {
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  font-style: italic;
+}
+
+.grp-card__meta {
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.grp-card__note {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+
+.grp-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.grp-card__tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* — stacked member chips — */
+.member-chips {
+  display: inline-flex;
+  align-items: center;
+}
+
+.member-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 800 10px var(--font-heading);
+  border: 2px solid var(--color-bg);
+}
+
+.member-chips--md .member-chip {
+  width: 24px;
+  height: 24px;
+}
+
+.member-chips--sm .member-chip {
+  width: 20px;
+  height: 20px;
+  font-size: 9px;
+}
+
+/* Overlap the chips slightly so a big group reads as a cluster, not a row. */
+.member-chip + .member-chip {
+  margin-left: -6px;
+}
+
+.member-chip--me {
+  border-color: var(--color-text);
+}
+
+/* — passphrase gate — */
+.grp-gate {
+  max-width: 420px;
+  margin: var(--space-8) auto;
+  padding: var(--space-6) var(--space-4);
+  border: 2px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+.grp-gate__title {
+  margin: 0 0 var(--space-2);
+  font-size: clamp(20px, 5vw, 28px);
+}
+
+.grp-gate__lead {
+  margin: 0 0 var(--space-4);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.grp-gate__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.grp-gate__form label {
+  font: 600 12px var(--font-body);
+}
+
+.grp-gate__form .btn {
+  align-self: flex-start;
+}
+
+.grp-gate__error {
+  margin-top: var(--space-3);
+}
