@@ -85,7 +85,7 @@
   font: 600 12px var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .hero__arrive {
@@ -93,7 +93,7 @@
   align-items: center;
   gap: 6px;
   font: 600 12px var(--font-body);
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .hero__arrive-input {
@@ -132,7 +132,7 @@
 
 .hero__stat {
   font-size: 12px;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .hero__stat--plan {
@@ -251,7 +251,7 @@
   font: 800 11px var(--font-heading);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
   margin-right: 4px;
 }
 
@@ -287,7 +287,7 @@
   font: 800 11px var(--font-heading);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
   margin-right: 4px;
 }
 
@@ -522,7 +522,7 @@
   font: 600 10px var(--font-body);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .score-bar__track {
@@ -576,7 +576,7 @@
   border-top: 2px solid var(--color-divider);
   text-align: center;
   font-size: 12px;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 
 /* — plan actions: ICS export, share link, timezone mode, name —
@@ -625,7 +625,7 @@
   font: 600 11px var(--font-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .plan-actions__body {
@@ -651,7 +651,7 @@
 .plan-actions__share-lead {
   margin: 0;
   font-size: 12px;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .plan-actions__share-error {
@@ -671,7 +671,7 @@
   font: 800 11px var(--font-heading);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
   padding: 0 4px;
 }
 
@@ -825,7 +825,7 @@
   font: 800 10px var(--font-heading);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .sub-row__url {
@@ -873,7 +873,7 @@
   margin-left: auto;
   align-self: center;
   font-size: 11px;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
   transition: transform 0.12s ease;
 }
 .plan-hub[open] .plan-hub__summary::after {
@@ -885,7 +885,7 @@
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .plan-hub__hint {
@@ -1030,7 +1030,7 @@
   font: 800 12px var(--font-heading);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 .hub-group__settings .hub-form {
   margin-top: var(--space-3);
@@ -1067,7 +1067,7 @@
   font: 800 10px var(--font-heading);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 .copy-field__value {
   flex: 1 1 220px;

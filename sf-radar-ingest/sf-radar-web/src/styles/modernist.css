@@ -5,17 +5,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap');
 
 :root {
-  --color-bg: #f3f2f2;
-  --color-surface: #eae9e9;
-  --color-text: #201e1d;
-  --color-accent: #ec3013;
-  --color-accent-2: #e15b47;
-  --color-divider: color-mix(in srgb, #201e1d 40%, transparent);
+  /* Palette (hand-tuned 2026-09, replacing the red-accent Modernist sync).
+     Neutral warm-paper ground, pure-white cards, burnt-orange accent.
+     WCAG AA verified — see the block comment below the ramps. */
+  --color-bg: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-text: #1A1A1A;
+  --color-text-secondary: #6B6B66;
+  --color-accent: #C2410C;              /* burnt orange; 5.0:1 on --color-bg, 5.2:1 on white */
+  --color-accent-2: #e15b47;            /* unchanged coral — keeps RSVP tags distinct from the primary */
+  --color-divider: #E5E5E0;
 
   /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
      same step of any role matches the others in visual value. */
-  --color-neutral-100: #f8f4f4;
-  --color-neutral-200: #eae7e7;
+  --color-neutral-100: #F1F0EC;
+  --color-neutral-200: #E4E3DE;
   --color-neutral-300: #d7d3d3;
   --color-neutral-400: #bab6b6;
   --color-neutral-500: #9b9797;
@@ -24,15 +28,18 @@
   --color-neutral-800: #444141;
   --color-neutral-900: #2d2b2b;
 
-  --color-accent-100: #fff2ef;
-  --color-accent-200: #ffe0d9;
-  --color-accent-300: #ffc4b8;
-  --color-accent-400: #ff9783;
-  --color-accent-500: #ff563c;
-  --color-accent-600: #dd2b0f;
-  --color-accent-700: #ae1800;
-  --color-accent-800: #7c1405;
-  --color-accent-900: #4d170e;
+  /* Orange ramp (Tailwind orange 100–900, warmed slightly at the top). -800 /
+     -900 are the text-on-tint steps (tags, banners, toasts) and clear AA on
+     the -100 tint; -300/-400 are decorative borders; -600 is the button hover. */
+  --color-accent-100: #FFF1E6;
+  --color-accent-200: #FFE0C7;
+  --color-accent-300: #FDBA74;
+  --color-accent-400: #FB923C;
+  --color-accent-500: #F97316;
+  --color-accent-600: #EA580C;
+  --color-accent-700: #C2410C;
+  --color-accent-800: #9A3412;
+  --color-accent-900: #7C2D12;
 
   --color-accent-2-100: #fff2ef;
   --color-accent-2-200: #ffe0da;
@@ -43,6 +50,14 @@
   --color-accent-2-700: #9e3526;
   --color-accent-2-800: #71261b;
   --color-accent-2-900: #471d16;
+
+  /* WCAG AA contrast (verified against both grounds):
+       #1A1A1A text        on #FAFAF8 = 15.9:1   on #FFFFFF = 16.6:1
+       #6B6B66 secondary   on #FAFAF8 =  5.2:1   on #FFFFFF =  5.4:1
+       #C2410C accent/link on #FAFAF8 =  5.0:1   on #FFFFFF =  5.2:1
+       #FAFAF8 on #C2410C button      =  5.0:1
+       #9A3412 (-800) on #FFF1E6 (-100) tint     =  6.6:1
+     #E5E5E0 divider is a decorative hairline, not held to a text ratio. */
 
   --font-heading: "Archivo", system-ui, sans-serif;
   --font-heading-weight: 800;
@@ -100,9 +115,9 @@ img { display: block; max-width: 100%; }
 figure { margin: 0; }
 figcaption {
   font-size: 11px; margin-top: var(--space-1);
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
-.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.text-muted { color: var(--color-text-secondary); }
 :focus { outline: none; }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
@@ -226,7 +241,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th {
   text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-text-secondary);
   padding: var(--space-2); border-bottom: 2px solid var(--color-divider);
 }
 .table td {
