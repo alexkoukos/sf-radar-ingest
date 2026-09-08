@@ -81,7 +81,7 @@
 .grp__empty {
   margin: var(--space-4) 0;
   font-size: 14px;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-text-secondary);
 }
 
 /* — night list — */
@@ -101,7 +101,7 @@
 }
 
 .grp__night--out .grp__night-head {
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .grp__night-head {
@@ -201,7 +201,7 @@
 .grp-card__owner-name {
   font-size: 11px;
   font-weight: 600;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-text-secondary);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -226,7 +226,7 @@
 }
 
 .grp-card__title--muted {
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 
@@ -295,7 +295,9 @@
   align-items: center;
   justify-content: center;
   font: 800 10px var(--font-heading);
-  border: 2px solid var(--color-bg);
+  /* A warm-grey ring, not page-colour: cards are white now, so a white ring
+     would vanish and the overlapping stack would lose its separation. */
+  border: 2px solid var(--color-neutral-200);
 }
 
 .member-chips--md .member-chip {
@@ -369,7 +371,7 @@
   font: 800 10px var(--font-heading);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-secondary);
   padding: 0 4px;
 }
 
@@ -497,7 +499,7 @@
   font: 800 11px var(--font-heading);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-text-secondary);
   padding-top: 2px;
 }
 .grp-howto__list dd {
