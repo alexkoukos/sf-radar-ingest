@@ -846,3 +846,224 @@
   font-size: 11px;
   line-height: 1.5;
 }
+
+/* ══ Group · Share · Calendar hub (below the night list) ═══════════════════ */
+.plan-hub {
+  margin: var(--space-8) 0 var(--space-4);
+  border-top: 2px solid var(--color-divider);
+  padding-top: var(--space-4);
+  scroll-margin-top: 12px;
+}
+
+.plan-hub__title {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.hub-sec {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-divider);
+}
+.hub-sec:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.hub-sec__title {
+  margin: 0 0 var(--space-3);
+  font: 800 12px var(--font-heading);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hub__note {
+  margin: var(--space-2) 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hub__error {
+  margin: var(--space-2) 0 0;
+}
+
+.hub-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font: 600 12px var(--font-body);
+  margin-bottom: var(--space-2);
+}
+.hub-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+.hub-field--inline .input {
+  flex: 1 1 auto;
+  max-width: 260px;
+}
+
+.hub-name-inline {
+  display: inline-block;
+  width: auto;
+  min-height: 28px;
+  padding: 2px 8px;
+  max-width: 160px;
+}
+
+.hub-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 2px dashed var(--color-divider);
+  background: var(--color-bg);
+}
+.hub-form__dates {
+  display: grid;
+  gap: var(--space-2);
+}
+@media (min-width: 480px) {
+  .hub-form__dates {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.hub-form__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.hub-setup__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* — in a group — */
+.hub-group__lead {
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+}
+.hub-group__swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  vertical-align: -1px;
+  margin: 0 2px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+}
+.hub-group__members {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.hub-group__member {
+  font-size: 12px;
+  font-weight: 600;
+}
+.hub-group__open {
+  margin: var(--space-2) 0;
+}
+.hub-group__passphrase {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 2px solid var(--color-accent);
+  background: var(--color-accent-100);
+}
+.hub-group__passphrase .hub__note {
+  color: var(--color-accent-900);
+}
+.hub-group__forget {
+  margin-top: var(--space-2);
+  font-size: 12px;
+}
+
+/* — copy field — */
+.copy-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  min-width: 0;
+}
+.copy-field__label {
+  flex: 0 0 5.5rem;
+  font: 800 10px var(--font-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.copy-field__value {
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 12px;
+}
+.copy-field__btn {
+  flex: 0 0 auto;
+}
+
+/* — timezone format: nested secondary setting — */
+.tz-toggle-wrap {
+  margin-top: var(--space-3);
+  border: 1px solid var(--color-divider);
+}
+.tz-toggle-wrap > summary {
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  font: 700 12px var(--font-body);
+}
+.tz-toggle-wrap > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+.tz-toggle-wrap .tz-toggle {
+  border: 0;
+  border-top: 1px solid var(--color-divider);
+}
+
+/* — nav group indicator — */
+.nav__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-divider);
+  font: 700 12px var(--font-body);
+  color: var(--color-text) !important;
+  text-decoration: none;
+  max-width: 45vw;
+}
+.nav__group-dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+}
+.nav__group-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* — hero affordance to the hub — */
+.hero__hub-link {
+  margin-top: 4px;
+  padding: 2px 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: 700 12px var(--font-body);
+  color: var(--color-accent);
+  text-align: right;
+}
+.hero__hub-link:hover {
+  text-decoration: underline;
+}
