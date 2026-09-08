@@ -77,7 +77,7 @@ describe("groupFeedIcs - the combined group feed", () => {
     expect(r.filename).toBe("Sept-SF-crew-sf-radar-group.ics");
 
     const cal = parse(r.body);
-    expect(cal.getFirstPropertyValue("x-wr-calname")).toBe("Sept SF crew — SF Radar group");
+    expect(cal.getFirstPropertyValue("x-wr-calname")).toBe("Sept SF crew (SF Radar group)");
     const vevents = cal.getAllSubcomponents("vevent");
     expect(vevents).toHaveLength(4);
 
@@ -150,7 +150,7 @@ describe("groupFeedIcs - the combined group feed", () => {
     expect(r.status).toBe(200);
     const cal = parse(r.body);
     expect(cal.getAllSubcomponents("vevent")).toHaveLength(0);
-    expect(cal.getFirstPropertyValue("x-wr-calname")).toBe("Sept SF crew — SF Radar group");
+    expect(cal.getFirstPropertyValue("x-wr-calname")).toBe("Sept SF crew (SF Radar group)");
   });
 
   it("tolerates junk input without throwing", () => {

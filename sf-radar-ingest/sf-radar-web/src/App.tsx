@@ -410,12 +410,12 @@ function App() {
               <h2 className="hero__heading">
                 {selectedNight === null || !wideNights ? (
                   <>
-                    Your Stay <span className="text-muted hero__sub">— all {WINDOW_DAYS} nights</span>
+                    Your Stay <span className="text-muted hero__sub">· all {WINDOW_DAYS} nights</span>
                   </>
                 ) : (
                   <>
                     <span className="hero__night-accent">Night {selectedNight - startOffset + 1}</span> of {WINDOW_DAYS}{" "}
-                    <span className="text-muted hero__sub">— {nightHeadingFormatter.format(wideNights[selectedNight].start)}</span>
+                    <span className="text-muted hero__sub">· {nightHeadingFormatter.format(wideNights[selectedNight].start)}</span>
                   </>
                 )}
               </h2>
@@ -477,7 +477,7 @@ function App() {
       )}
 
       {selectedNight !== null && selectedNightConflictCount >= 2 && (
-        <p className="conflict-flag">{selectedNightConflictCount} strong picks tonight — you can only make one</p>
+        <p className="conflict-flag">{selectedNightConflictCount} strong picks tonight, you can only make one</p>
       )}
 
       {events.length > 0 && (

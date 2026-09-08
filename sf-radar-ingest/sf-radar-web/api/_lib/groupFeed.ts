@@ -65,7 +65,7 @@ export function groupFeedIcs(rpcData: unknown, groupNameFallback: string): Group
 
   try {
     const items = rows.map(toItem).filter((i): i is GroupFeedItem => i !== null);
-    const { value } = buildGroupFeedIcs(items, { calName: `${groupName} — SF Radar group` });
+    const { value } = buildGroupFeedIcs(items, { calName: `${groupName} (SF Radar group)` });
     return { status: 200, body: value ?? "", filename };
   } catch {
     return { status: 500, body: "Couldn't build the group calendar feed.", filename };

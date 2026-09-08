@@ -27,7 +27,7 @@ const MEETING_TYPE_LABEL: Record<MeetingType, string> = {
 
 const VIS_HELP: Record<CustomEventVisibility, string> = {
   shared: "Everyone in the group sees the full details.",
-  busy: "The group sees only that you're unavailable — no title, no name, no company.",
+  busy: "The group sees only that you're unavailable. No title, no name, no company.",
   private: "Only you see this. It stays off the group view entirely.",
 };
 
@@ -107,7 +107,7 @@ function CustomEventForm({
   }
 
   const titlePlaceholder = useMemo(
-    () => (isMeeting ? "e.g. Coffee with Sarah Chen — leave blank to auto-name" : "e.g. Group dinner"),
+    () => (isMeeting ? "e.g. Coffee with Sarah Chen (blank to auto-name)" : "e.g. Group dinner"),
     [isMeeting],
   );
 

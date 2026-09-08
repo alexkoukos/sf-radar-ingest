@@ -146,7 +146,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
     try {
       const newSlug = await regeneratePlan();
       setShareSlug(newSlug);
-      setToast("New link generated — the old one no longer works.");
+      setToast("New link generated. The old one no longer works.");
       window.setTimeout(() => setToast(null), 4000);
     } catch (err) {
       setShareError(err instanceof Error ? err.message : "Couldn't regenerate the link.");
@@ -175,7 +175,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
     });
     setToast(
       result.ok
-        ? `Downloaded ${result.count} event${result.count === 1 ? "" : "s"} — ${
+        ? `Downloaded ${result.count} event${result.count === 1 ? "" : "s"}, ${
             tzMode === "tzid" ? "SF timezone (TZID)" : "SF times as-is"
           }`
         : (result.error ?? "Export failed"),
@@ -238,7 +238,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
               </button>
             </div>
             <p className="hub__note text-muted">
-              Editing rights stay on this browser only. If the link leaks, regenerate it — the old
+              Editing rights stay on this browser only. If the link leaks, regenerate it; the old
               one stops working immediately.
             </p>
           </>
@@ -281,7 +281,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
 
         <details className="tz-toggle-wrap">
           <summary>
-            Calendar time format —{" "}
+            Calendar time format:{" "}
             {tzMode === "tzid" ? "San Francisco timezone" : "SF times as-is"}
           </summary>
           <fieldset className="tz-toggle">
@@ -295,7 +295,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
               />
               <span className="dot" aria-hidden="true" />
               <span>
-                <strong>San Francisco timezone</strong> — events carry{" "}
+                <strong>San Francisco timezone.</strong> Events carry{" "}
                 <code>America/Los_Angeles</code>. Correct instant everywhere; reminders fire right.
                 Best if your calendar isn't already set to SF time.
               </span>
@@ -309,7 +309,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
               />
               <span className="dot" aria-hidden="true" />
               <span>
-                <strong>Show SF times as-is (ignores your timezone)</strong> — every app shows the
+                <strong>Show SF times as-is (ignores your timezone).</strong> Every app shows the
                 literal SF wall-clock number. Simple to read, but not tied to a real moment.
               </span>
             </label>

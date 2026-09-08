@@ -78,7 +78,7 @@ export function toSnapshot(event: DashboardEvent): PlanEventSnapshot {
  */
 function randomHex(byteLength: number): string {
   if (typeof crypto === "undefined" || typeof crypto.getRandomValues !== "function") {
-    throw new Error("Secure random isn't available in this browser — can't create a share link.");
+    throw new Error("Secure random isn't available in this browser, so a share link can't be created.");
   }
   const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);
