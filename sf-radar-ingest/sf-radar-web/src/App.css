@@ -849,7 +849,7 @@
 
 /* ══ Group · Share · Calendar hub (top of page, collapsed by default) ════ */
 .plan-hub {
-  margin: 0 0 var(--space-6);
+  margin: 0 0 calc(var(--space-8) + var(--space-4));
   border: 1px solid var(--color-divider);
   border-radius: var(--radius, 8px);
   background: color-mix(in srgb, var(--color-text) 3%, transparent);

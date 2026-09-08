@@ -25,7 +25,7 @@ Parts **1, 2, 3, 5, 6, 8** of the group spec are shipped to `master`, deployed o
 
 **Still owed by the human (service-role SQL editor / a real device), tracked so a fresh session doesn't re-derive it:**
 1. Run the geo-gate `CREATE OR REPLACE FUNCTION get_dashboard_events(...)` (the `schema.sql` version) — the 6h ingest cron re-applies it anyway, so this only matters for immediacy.
-2. `DELETE FROM groups WHERE group_slug IN (...)` for the throwaway proof groups: `f9d9b79a2a15799ff088ddded2dcc692`, `9b19f63b6fc2fe97ff057a3aab7d8e9e`, `e7dd448dc021960ac54fd48d10481240`, `cd3d84b8e5fc22aa79d1be659574a5dd`, `bf3f3c8a2153df1f4395ed9cf57a9d7d`, `b08cf7dbf2759c0e62433b439f5f6265` (some may already be gone).
+2. `DELETE FROM groups WHERE group_slug IN (...)` for the throwaway proof groups: `f9d9b79a2a15799ff088ddded2dcc692`, `9b19f63b6fc2fe97ff057a3aab7d8e9e`, `e7dd448dc021960ac54fd48d10481240`, `cd3d84b8e5fc22aa79d1be659574a5dd`, `bf3f3c8a2153df1f4395ed9cf57a9d7d`, `b08cf7dbf2759c0e62433b439f5f6265`, `5cca1c8975e22c1c7fd7e6e45297c6e4` (last one is the 007-client rename+busy-URL proof group — also `DELETE FROM plans WHERE slug = 'proof6cddd1eecf36a4656b78'`; some earlier ones may already be gone).
 3. Delete two junk plans: slug `0890eaf4206729edc49ae00b33f16b36` (my Part 5 headless orphan) and `zzztestslugthatislongenough` (pre-existing manual test).
 4. Subscribe the combined feed in a real Google Calendar and confirm it propagates on the next poll — validated here only by `ical.js` parse + live curl.
 
