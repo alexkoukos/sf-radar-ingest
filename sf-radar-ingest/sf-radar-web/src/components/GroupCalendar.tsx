@@ -144,7 +144,7 @@ function GroupCalendar({
     <div className="grp">
       <header className="grp__head">
         <div className="hero__range">
-          {group.name} · {rangeFmt.format(dateForHeading(group.start_date))} –{" "}
+          {group.name} · {rangeFmt.format(dateForHeading(group.start_date))} to{" "}
           {rangeFmt.format(dateForHeading(group.end_date))} · SF
         </div>
         <h1 className="grp__title">Group calendar</h1>

@@ -44,6 +44,13 @@
   gap: var(--space-2);
 }
 
+/* Confirmation shown where the form was after "Add to plan" - the resulting
+   card can be far down the list or filtered out of the current view. */
+.log-toast {
+  display: block;
+  margin: var(--space-3) 0 0;
+}
+
 /* Banners: stale/error states are always visible, never a blank page. */
 .banner {
   padding: 10px 14px;
@@ -350,6 +357,20 @@
   grid-template-columns: 1fr;
   gap: var(--space-3);
   min-width: 0;
+}
+
+/* Sits directly under .ev-grid, which carries the window's bottom margin, so
+   pull up into that gap and re-add breathing room below the button. */
+.ev-loadmore {
+  display: flex;
+  justify-content: center;
+  margin: calc(var(--space-6) * -1 + var(--space-2)) 0 var(--space-6);
+}
+.ev-loadmore__btn {
+  width: 100%;
+  max-width: 320px;
+  justify-content: center;
+  text-align: center;
 }
 
 @media (min-width: 640px) {
@@ -923,6 +944,26 @@
   margin: var(--space-2) 0 0;
 }
 
+/* "How this works" explainer. Borrows the .plan-hub disclosure chrome; only
+   the outer spacing and the stacked points are its own. Sits between the hub
+   and the hero, so it drops the hub's large top/bottom margin. */
+.how-works {
+  margin: 0 0 var(--space-6);
+}
+.how-works__body {
+  display: grid;
+  gap: var(--space-3);
+}
+.how-works__point {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+.how-works__point strong {
+  color: var(--color-text);
+}
+
 .hub-field {
   display: flex;
   flex-direction: column;
@@ -1206,5 +1247,18 @@
   /* — SP1: Download .ics button was flush against the wrapper border — */
   .plan-actions {
     padding: var(--space-3);
+  }
+
+  /* — LN1: roomier, equal-width Log-a-night actions. 8px between two 44px
+     targets is mis-tap territory, and "Cancel" here discards typed input. — */
+  .log-night-form__actions {
+    gap: var(--space-3);
+  }
+  .log-night-form__actions .btn {
+    flex: 1 1 0;
+  }
+  /* — LN2: keep a focused field off the top edge when the keyboard lifts it — */
+  .log-night-form .input {
+    scroll-margin-top: var(--space-4);
   }
 }

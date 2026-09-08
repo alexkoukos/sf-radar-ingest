@@ -53,7 +53,7 @@ export function validateCreate(body: unknown): Validated<CreateInput> {
 
   const name = cleanText(body.name);
   if (!name || name.length > NAME_MAX) {
-    return { ok: false, error: `Group name must be 1-${NAME_MAX} characters.` };
+    return { ok: false, error: `Group name must be 1 to ${NAME_MAX} characters.`};
   }
 
   const startDate = typeof body.startDate === "string" ? body.startDate : "";
@@ -71,7 +71,7 @@ export function validateCreate(body: unknown): Validated<CreateInput> {
 
   const displayName = cleanText(body.displayName);
   if (!displayName || displayName.length > DISPLAY_NAME_MAX) {
-    return { ok: false, error: `Your name must be 1-${DISPLAY_NAME_MAX} characters.` };
+    return { ok: false, error: `Your name must be 1 to ${DISPLAY_NAME_MAX} characters.`};
   }
 
   return {
@@ -119,7 +119,7 @@ export function validateJoin(body: unknown): Validated<JoinInput> {
 
   const displayName = cleanText(body.displayName);
   if (!displayName || displayName.length > DISPLAY_NAME_MAX) {
-    return { ok: false, error: `Your name must be 1-${DISPLAY_NAME_MAX} characters.` };
+    return { ok: false, error: `Your name must be 1 to ${DISPLAY_NAME_MAX} characters.`};
   }
 
   return { ok: true, value: { planSlug, editKey, displayName } };
@@ -152,7 +152,7 @@ export function validateSettings(body: unknown): Validated<SettingsInput> {
   if (body.name !== undefined && body.name !== null) {
     const cleaned = cleanText(body.name);
     if (!cleaned || cleaned.length > NAME_MAX) {
-      return { ok: false, error: `Group name must be 1-${NAME_MAX} characters.` };
+      return { ok: false, error: `Group name must be 1 to ${NAME_MAX} characters.`};
     }
     name = cleaned;
   }

@@ -199,7 +199,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
     setSettingsErr(null);
     setSettingsOk(null);
     if (next.length < 1 || next.length > 80) {
-      setSettingsErr("Group name must be 1–80 characters.");
+      setSettingsErr("Group name must be 1 to 80 characters.");
       return;
     }
     if (next === group.name) {
@@ -307,7 +307,7 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
               <CopyField label="Feed (https)" value={feed.https} />
               <CopyField label="Feed (webcal)" value={feed.webcal} />
               <p className="hub__note text-muted">
-                Updates are not instant. Calendar apps re-check every few hours (Google about 8 to
+                Updates are not instant. Calendar apps recheck every few hours (Google about 8 to
                 24h). Meetings marked "Busy" show as Busy only.
               </p>
             </details>

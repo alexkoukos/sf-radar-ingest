@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
 import type { DashboardEvent } from "./types";
 import {
@@ -19,6 +19,7 @@ import EventCard from "./components/EventCard";
 import EventModal from "./components/EventModal";
 import FilterChips from "./components/FilterChips";
 import PlanActions from "./components/PlanActions";
+import HowItWorks from "./components/HowItWorks";
 import SortRow, { type SortMode } from "./components/SortRow";
 import ViewToggle from "./components/ViewToggle";
 import LogNightForm from "./components/LogNightForm";
@@ -26,6 +27,11 @@ import LoggedNightCard from "./components/LoggedNightCard";
 import "./App.css";
 
 const WINDOW_DAYS = 14;
+// "Your Stay - all 14 nights" can list every event in the window at once
+// (dozens+). Page it: first BATCH_SIZE, then grow by BATCH_SIZE on a
+// "Load more" tap or when the scroll sentinel nears the viewport. The
+// single-night view is already short and is never paged.
+const BATCH_SIZE = 20;
 // Fetched wider than the 14 nights shown at once so the arrival picker can
 // re-anchor the window client-side without a second call to the frozen
 // get_dashboard_events RPC or a new parameter.
@@ -77,7 +83,14 @@ function App() {
   const [plan, setPlan] = useState<LocalPlan>({ attending: {}, logged: [] });
   const [startDateStr, setStartDateStr] = useState<string | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
+  const [logToast, setLogToast] = useState<string | null>(null);
   const [group, setGroup] = useState<GroupMembership | null>(null);
+  // How many events the all-nights list currently shows. Reset to BATCH_SIZE
+  // whenever the list identity changes (filters, sort, window anchor, or
+  // entering/leaving a single night) so a new filter starts at batch one
+  // instead of appending onto a stale offset.
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setPlan(loadLocalPlan());
@@ -182,6 +195,39 @@ function App() {
     return list;
   }, [windowEvents, eventsByNight, selectedNight, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly, plan]);
 
+  // The all-nights list is paged; the single-night list is shown whole. Rank
+  // numbers come from the index within visibleEvents, so slicing off the tail
+  // leaves #01/#02/#03... untouched across batches.
+  const allNightsView = selectedNight === null;
+  const pagedEvents = allNightsView ? visibleEvents.slice(0, visibleCount) : visibleEvents;
+  const hasMoreEvents = allNightsView && visibleEvents.length > visibleCount;
+
+  // Any change to what the list *is* - filter chip, sort, arrival re-anchor,
+  // or entering/leaving a single night - restarts it at batch one rather than
+  // appending onto the previous offset.
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE);
+  }, [selectedNight, startOffset, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly]);
+
+  // Infinite scroll: grow the list when the sentinel under it nears the
+  // viewport. The visible "Load more" button is the tap fallback and the
+  // path taken where IntersectionObserver is unavailable.
+  useEffect(() => {
+    if (!hasMoreEvents) return;
+    const el = loadMoreRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((c) => c + BATCH_SIZE);
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMoreEvents, visibleCount]);
+
   const selectedNightConflictCount = useMemo(() => {
     if (selectedNight === null) return 0;
     return (eventsByNight.get(selectedNight) ?? []).filter(
@@ -195,7 +241,7 @@ function App() {
   }, [windowNights, eventsByNight]);
 
   const rangeLabel = windowNights
-    ? `${rangeFormatter.format(windowNights[0].start)} – ${rangeFormatter.format(windowNights[windowNights.length - 1].start)}`
+    ? `${rangeFormatter.format(windowNights[0].start)} to ${rangeFormatter.format(windowNights[windowNights.length - 1].start)}`
     : null;
 
   // Which nights carry either a ranked "Attending" pick or a self-logged
@@ -273,6 +319,10 @@ function App() {
       return next;
     });
     setShowLogForm(false);
+    // The new LoggedNightCard can land off-screen or be filtered out of the
+    // current window/night, so confirm the save explicitly and name the night.
+    setLogToast(`Added to your plan for ${nightLabelFor(entry.nightIndex)}.`);
+    window.setTimeout(() => setLogToast(null), 3500);
   }
 
   function removeLoggedNight(id: string) {
@@ -359,10 +409,16 @@ function App() {
         />
       )}
 
+      {logToast && (
+        <p className="log-toast plan-actions__toast" role="status">
+          {logToast}
+        </p>
+      )}
+
       {staleSince && (
         <p className="banner banner--stale">
           Showing data from {staleTimestampFormatter.format(new Date(staleSince))}{" "}
-          {laZoneAbbrev(new Date(staleSince))} - couldn't refresh
+          {laZoneAbbrev(new Date(staleSince))}. Couldn't refresh
           {error ? `: ${error}` : "."}
         </p>
       )}
@@ -377,6 +433,8 @@ function App() {
           startDate={startDateStr}
         />
       )}
+
+      <HowItWorks />
 
       <div className="hero">
         <div className="hero__top">
@@ -508,7 +566,7 @@ function App() {
       )}
 
       <ul className="ev-grid">
-        {visibleEvents.map((event, i) => (
+        {pagedEvents.map((event, i) => (
           <EventCard
             key={event.api_id}
             event={event}
@@ -527,6 +585,18 @@ function App() {
           />
         ))}
       </ul>
+
+      {hasMoreEvents && (
+        <div className="ev-loadmore" ref={loadMoreRef}>
+          <button
+            type="button"
+            className="btn btn-secondary ev-loadmore__btn"
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+          >
+            Load more · {visibleEvents.length - visibleCount} left
+          </button>
+        </div>
+      )}
 
       <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
 

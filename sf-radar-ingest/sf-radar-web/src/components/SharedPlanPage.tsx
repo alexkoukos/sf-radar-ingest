@@ -108,7 +108,7 @@ function SharedPlanPage({ slug }: { slug: string }) {
     const last = new Date(`${nights[nights.length - 1].date}T12:00:00Z`);
     return nights.length === 1
       ? rangeFormatter.format(first)
-      : `${rangeFormatter.format(first)} – ${rangeFormatter.format(last)}`;
+      : `${rangeFormatter.format(first)} to ${rangeFormatter.format(last)}`;
   }, [nights]);
 
   function handleDownload() {
@@ -137,7 +137,7 @@ function SharedPlanPage({ slug }: { slug: string }) {
         </div>
         <h1 className="hero__heading">Someone's SF nights</h1>
         <p className="shared-plan__sub text-muted">
-          A read-only snapshot of the events on this plan
+          A snapshot of the events on this plan
           {plan?.created_at ? `, shared ${createdFormatter.format(new Date(plan.created_at))}` : ""}. Not
           editable here.
         </p>

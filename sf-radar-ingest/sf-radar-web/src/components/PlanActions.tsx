@@ -176,7 +176,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
     setToast(
       result.ok
         ? `Downloaded ${result.count} event${result.count === 1 ? "" : "s"}, ${
-            tzMode === "tzid" ? "SF timezone (TZID)" : "SF times as-is"
+            tzMode === "tzid" ? "SF timezone (TZID)" : "SF times unchanged"
           }`
         : (result.error ?? "Export failed"),
     );
@@ -223,8 +223,8 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
         {shareSlug ? (
           <>
             <p className="hub__note text-muted">
-              Anyone with this link sees a read-only copy of your plan. It stays in sync as you
-              edit.
+              Anyone with this link sees a view of your plan they cannot change. It stays in sync
+              as you edit.
             </p>
             <CopyField label="Share link" value={sharePageUrl} />
             <div className="hub-form__actions">
@@ -282,7 +282,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
         <details className="tz-toggle-wrap">
           <summary>
             Calendar time format:{" "}
-            {tzMode === "tzid" ? "San Francisco timezone" : "SF times as-is"}
+            {tzMode === "tzid" ? "San Francisco timezone" : "SF times unchanged"}
           </summary>
           <fieldset className="tz-toggle">
             <legend className="tz-toggle__legend">Applies to the download and the feed</legend>
@@ -309,8 +309,8 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
               />
               <span className="dot" aria-hidden="true" />
               <span>
-                <strong>Show SF times as-is (ignores your timezone).</strong> Every app shows the
-                literal SF wall-clock number. Simple to read, but not tied to a real moment.
+                <strong>Show SF times unchanged (ignores your timezone).</strong> Every app shows the
+                literal SF wall clock number. Simple to read, but not tied to a real moment.
               </span>
             </label>
           </fieldset>
