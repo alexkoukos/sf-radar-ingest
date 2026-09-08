@@ -9,6 +9,7 @@ import {
   loadGroupMembership,
   parseGroupSlug,
   saveGroupMembership,
+  updateGroupSettings,
   type GroupMembership,
 } from "../lib/groupMembership";
 import { readableInk } from "../lib/memberColor";
@@ -54,9 +55,21 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ── group settings (rename + passphrase change; no migration) ─────────
+  const [renameValue, setRenameValue] = useState("");
+  const [curPass, setCurPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [settingsBusy, setSettingsBusy] = useState(false);
+  const [settingsErr, setSettingsErr] = useState<string | null>(null);
+  const [settingsOk, setSettingsOk] = useState<string | null>(null);
+
   useEffect(() => {
     setGroup(loadGroupMembership());
   }, []);
+
+  useEffect(() => {
+    if (group) setRenameValue(group.name);
+  }, [group]);
 
   useEffect(() => {
     if (!group) {
@@ -179,6 +192,62 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
     setFreshPassphrase(null);
   }
 
+  async function submitRename(e: React.FormEvent) {
+    e.preventDefault();
+    if (settingsBusy || !group) return;
+    const next = renameValue.trim();
+    setSettingsErr(null);
+    setSettingsOk(null);
+    if (next.length < 1 || next.length > 80) {
+      setSettingsErr("Group name must be 1–80 characters.");
+      return;
+    }
+    if (next === group.name) {
+      setSettingsErr("That's already the group name.");
+      return;
+    }
+    setSettingsBusy(true);
+    try {
+      await updateGroupSettings({ name: next });
+      const updated: GroupMembership = { ...group, name: next };
+      saveGroupMembership(updated);
+      setGroup(updated);
+      setSettingsOk("Group name updated.");
+    } catch (err) {
+      setSettingsErr(err instanceof Error ? err.message : "Couldn't rename the group.");
+    } finally {
+      setSettingsBusy(false);
+    }
+  }
+
+  async function submitPassphrase(e: React.FormEvent) {
+    e.preventDefault();
+    if (settingsBusy) return;
+    setSettingsErr(null);
+    setSettingsOk(null);
+    if (!curPass.trim()) {
+      setSettingsErr("Enter the current passphrase.");
+      return;
+    }
+    if (newPass.trim().length < 4) {
+      setSettingsErr("New passphrase must be at least 4 characters.");
+      return;
+    }
+    setSettingsBusy(true);
+    try {
+      await updateGroupSettings({ currentPassphrase: curPass, newPassphrase: newPass });
+      setCurPass("");
+      setNewPass("");
+      setSettingsOk(
+        "Passphrase changed. Share the new one in Slack — nobody is signed out, but new joiners will need it.",
+      );
+    } catch (err) {
+      setSettingsErr(err instanceof Error ? err.message : "Couldn't change the passphrase.");
+    } finally {
+      setSettingsBusy(false);
+    }
+  }
+
   // ── in a group ───────────────────────────────────────────────────────
   if (group) {
     return (
@@ -255,6 +324,65 @@ function GroupHubSection({ ensurePlanPublished, startDate, name, onNameChange }:
             </p>
           </div>
         )}
+
+        <details className="hub-group__settings">
+          <summary>Group settings</summary>
+
+          <form className="hub-form" onSubmit={submitRename}>
+            <label className="hub-field">
+              <span>Group name</span>
+              <input
+                className="input"
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                maxLength={80}
+              />
+            </label>
+            <div className="hub-form__actions">
+              <button type="submit" className="btn btn-secondary" disabled={settingsBusy}>
+                {settingsBusy ? "Saving…" : "Rename group"}
+              </button>
+            </div>
+          </form>
+
+          <form className="hub-form" onSubmit={submitPassphrase}>
+            <label className="hub-field">
+              <span>Current passphrase</span>
+              <input
+                className="input"
+                type="password"
+                autoComplete="off"
+                value={curPass}
+                onChange={(e) => setCurPass(e.target.value)}
+                maxLength={64}
+              />
+            </label>
+            <label className="hub-field">
+              <span>New passphrase (4–64 chars)</span>
+              <input
+                className="input"
+                type="text"
+                autoComplete="off"
+                value={newPass}
+                onChange={(e) => setNewPass(e.target.value)}
+                maxLength={64}
+                placeholder="e.g. green kite harbor"
+              />
+            </label>
+            <div className="hub-form__actions">
+              <button type="submit" className="btn btn-secondary" disabled={settingsBusy}>
+                {settingsBusy ? "Saving…" : "Change passphrase"}
+              </button>
+            </div>
+            <p className="hub__note text-muted">
+              Changing it doesn't sign anyone out — it's only needed when someone new re-enters the
+              gate. It can't be recovered, so share the new one in Slack.
+            </p>
+          </form>
+
+          {settingsErr && <p className="banner banner--error hub__error">{settingsErr}</p>}
+          {settingsOk && <p className="hub__note hub-group__settings-ok">{settingsOk}</p>}
+        </details>
 
         <button type="button" className="btn btn-ghost hub-group__forget" onClick={forget}>
           Forget this group on this device

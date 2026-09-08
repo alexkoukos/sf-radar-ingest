@@ -25,6 +25,8 @@ export interface GroupCustomEvent {
   ends_at?: string | null;
   location?: string | null;
   note?: string | null;
+  /** Present only on 'shared' entries — redacted out of 'busy' by group_view. */
+  url?: string | null;
   with_name?: string | null;
   with_company?: string | null;
   meeting_type?: string | null;

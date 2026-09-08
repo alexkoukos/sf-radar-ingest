@@ -137,6 +137,36 @@ export interface JoinGroupResponse {
   feedToken: string;
 }
 
+export interface UpdateGroupSettingsInput {
+  /** New group name, or undefined to leave it unchanged. */
+  name?: string;
+  /** Both required together to rotate the passphrase. */
+  currentPassphrase?: string;
+  newPassphrase?: string;
+}
+
+/**
+ * POST /api/group/settings — rename the group and/or change its passphrase.
+ * Authorised by the HttpOnly group-session cookie; changing the passphrase
+ * also needs the current one. No migration — `groups.name` /
+ * `passphrase_hash` are updated in place by the service-role endpoint.
+ */
+export async function updateGroupSettings(input: UpdateGroupSettingsInput): Promise<void> {
+  const res = await fetch("/api/group/settings", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const body = (await res.json().catch(() => ({}))) as { error?: string };
+  if (!res.ok) {
+    throw new Error(
+      res.status === 429
+        ? "Too many changes — wait a few minutes and try again."
+        : (body.error ?? `Couldn't save the changes (${res.status}).`),
+    );
+  }
+}
+
 export async function joinGroup(input: JoinGroupInput): Promise<JoinGroupResponse> {
   const login = await fetch("/api/group/login", {
     method: "POST",

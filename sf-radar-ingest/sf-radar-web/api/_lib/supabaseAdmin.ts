@@ -84,6 +84,19 @@ export async function adminInsert(
   return parse(res);
 }
 
+/** PATCH `/rest/v1/<pathAndQuery>` — partial update of matched rows as service role. */
+export async function adminUpdate(
+  pathAndQuery: string,
+  patch: Record<string, unknown>,
+): Promise<AdminResult> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${pathAndQuery}`, {
+    method: "PATCH",
+    headers: { ...baseHeaders(), Prefer: "return=representation" },
+    body: JSON.stringify(patch),
+  });
+  return parse(res);
+}
+
 /** DELETE `/rest/v1/<pathAndQuery>` — used only for compensating cleanup. */
 export async function adminDelete(pathAndQuery: string): Promise<AdminResult> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${pathAndQuery}`, {

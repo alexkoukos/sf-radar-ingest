@@ -203,9 +203,11 @@ Cached events load instantly from `localStorage` on open. If a live fetch fails 
 
 ## Trip groups
 
-An optional layer for people coordinating a trip together. From the **Group · Share · Calendar** section below the night list you can **create a group** (it adopts your current plan as member #1) or **join one** with an invite link. A group has an unguessable link plus a passphrase — the link alone shows nothing; the passphrase gate is enforced server-side by the Vercel functions in `api/group/`, and the group tables are unreachable with the anon key (RLS enabled, zero policies). No accounts.
+An optional layer for people coordinating a trip together. From the **Group · Share · Calendar** panel at the top of the page (collapsed by default) you can **create a group** (it adopts your current plan as member #1) or **join one** with an invite link. A group has an unguessable link plus a passphrase — the link alone shows nothing; the passphrase gate is enforced server-side by the Vercel functions in `api/group/`, and the group tables are unreachable with the anon key (RLS enabled, zero policies). No accounts.
 
-The group calendar at `/group/<slug>` overlays every member's plan night-by-night, in per-member colors from a CVD-safe palette. An event two or more members are attending renders **once** with stacked member indicators, not one row per person. Members can add their own custom events and 1:1 meetings; a meeting defaults to **busy** visibility, which shows the rest of the group only an anonymous "Busy" block — no title, no name — with that redaction done in SQL, before the data leaves Postgres.
+Any member can **rename the group** or **change the passphrase** later, under *Group settings* in that panel; changing the passphrase requires the current one and doesn't sign existing members out — only new joiners need the new value. Member colors stay auto-assigned by join order from the palette.
+
+The group calendar at `/group/<slug>` overlays every member's plan night-by-night, in per-member colors auto-assigned from a CVD-safe palette. An event two or more members are attending renders **once** with stacked member indicators, not one row per person. Members can add their own custom events and 1:1 meetings; a meeting defaults to **busy** visibility, which shows the rest of the group only an anonymous "Busy" block — no title, no name — with that redaction done in SQL, before the data leaves Postgres.
 
 ### Subscribing to the combined group calendar
 

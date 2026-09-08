@@ -847,20 +847,54 @@
   line-height: 1.5;
 }
 
-/* ══ Group · Share · Calendar hub (below the night list) ═══════════════════ */
+/* ══ Group · Share · Calendar hub (top of page, collapsed by default) ════ */
 .plan-hub {
-  margin: var(--space-8) 0 var(--space-4);
-  border-top: 2px solid var(--color-divider);
-  padding-top: var(--space-4);
-  scroll-margin-top: 12px;
+  margin: 0 0 var(--space-6);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius, 8px);
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+}
+
+.plan-hub__summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  user-select: none;
+}
+.plan-hub__summary::-webkit-details-marker {
+  display: none;
+}
+.plan-hub__summary::after {
+  content: "▸";
+  margin-left: auto;
+  align-self: center;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  transition: transform 0.12s ease;
+}
+.plan-hub[open] .plan-hub__summary::after {
+  transform: rotate(90deg);
 }
 
 .plan-hub__title {
-  margin: 0 0 var(--space-3);
+  margin: 0;
   font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.plan-hub__hint {
+  font-size: 11px;
+}
+
+.plan-hub__body {
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--color-divider);
 }
 
 .hub-sec {
@@ -986,6 +1020,26 @@
   font-size: 12px;
 }
 
+.hub-group__settings {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+}
+.hub-group__settings > summary {
+  cursor: pointer;
+  font: 800 12px var(--font-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.hub-group__settings .hub-form {
+  margin-top: var(--space-3);
+}
+.hub-group__settings-ok {
+  color: var(--color-accent-900);
+  font-weight: 600;
+}
+
 /* — copy field — */
 .copy-field {
   display: flex;
@@ -1051,21 +1105,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* — hero affordance to the hub — */
-.hero__hub-link {
-  margin-top: 4px;
-  padding: 2px 0;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  font: 700 12px var(--font-body);
-  color: var(--color-accent);
-  text-align: right;
-}
-.hero__hub-link:hover {
-  text-decoration: underline;
 }
 
 .hub-group__feed {

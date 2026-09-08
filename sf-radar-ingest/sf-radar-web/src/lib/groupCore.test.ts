@@ -4,6 +4,7 @@ import {
   validateCreate,
   validateJoin,
   validateLogin,
+  validateSettings,
 } from "../../api/_lib/groupCore";
 import { cleanText } from "../../api/_lib/groupText";
 import {
@@ -121,6 +122,50 @@ describe("validateJoin", () => {
     expect(validateJoin({ planSlug: "x", editKey: EDIT_KEY, displayName: "Mara" }).ok).toBe(false);
     expect(validateJoin({ planSlug: PLAN_SLUG, editKey: "x", displayName: "Mara" }).ok).toBe(false);
     expect(validateJoin({ planSlug: PLAN_SLUG, editKey: EDIT_KEY, displayName: "" }).ok).toBe(false);
+  });
+});
+
+describe("validateSettings", () => {
+  it("accepts a rename-only body, cleaning the name", () => {
+    const r = validateSettings({ name: "  New\r\nName  " });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.name).toBe("New Name");
+      expect(r.value.changePassphrase).toBe(false);
+    }
+  });
+  it("accepts a passphrase-change body, normalizing both", () => {
+    const r = validateSettings({ currentPassphrase: "  Old Pass ", newPassphrase: " New PASS " });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.changePassphrase).toBe(true);
+      expect(r.value.currentPassphrase).toBe("old pass");
+      expect(r.value.newPassphrase).toBe("new pass");
+      expect(r.value.name).toBeNull();
+    }
+  });
+  it("rejects an empty body (nothing to change)", () => {
+    expect(validateSettings({}).ok).toBe(false);
+  });
+  it("rejects a too-long name", () => {
+    expect(validateSettings({ name: "x".repeat(81) }).ok).toBe(false);
+  });
+  it("rejects a name that cleans to empty", () => {
+    expect(validateSettings({ name: "  \r\n  " }).ok).toBe(false);
+  });
+  it("enforces new-passphrase length but not current-passphrase length", () => {
+    expect(validateSettings({ currentPassphrase: "ok", newPassphrase: "ab" }).ok).toBe(false);
+    const r = validateSettings({ currentPassphrase: "x", newPassphrase: "abcd" });
+    expect(r.ok).toBe(true);
+  });
+  it("requires the current passphrase when changing it", () => {
+    expect(validateSettings({ newPassphrase: "abcd" }).ok).toBe(false);
+    expect(validateSettings({ currentPassphrase: "   ", newPassphrase: "abcd" }).ok).toBe(false);
+  });
+  it("rejects a no-op passphrase change (new equals current after normalizing)", () => {
+    expect(validateSettings({ currentPassphrase: "Same One", newPassphrase: " same one " }).ok).toBe(
+      false,
+    );
   });
 });
 

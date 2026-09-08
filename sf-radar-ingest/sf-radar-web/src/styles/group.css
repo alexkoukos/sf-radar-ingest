@@ -241,6 +241,16 @@
   color: color-mix(in srgb, var(--color-text) 70%, transparent);
 }
 
+.grp-card__link {
+  font-weight: 600;
+  color: var(--color-accent, currentColor);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.grp-card__link:hover {
+  text-decoration: underline;
+}
+
 .grp-card__attendees {
   display: flex;
   align-items: center;

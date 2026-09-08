@@ -12,14 +12,31 @@ import { supabase } from "./supabaseClient";
 
 export type CustomEventKind = "generic" | "meeting";
 export type CustomEventVisibility = "shared" | "busy" | "private";
-export type MeetingType = "coffee" | "one_on_one" | "call" | "lunch" | "dinner" | "other";
+export type MeetingType =
+  | "coffee"
+  | "one_on_one"
+  | "call"
+  | "lunch"
+  | "dinner"
+  | "breakfast"
+  | "drinks"
+  | "walk"
+  | "on_site"
+  | "other";
 
+// Order = display order in the form's dropdown. Must stay in sync with the
+// CHECK on custom_events.meeting_type and the guard in upsert_custom_event
+// (migration 007).
 export const MEETING_TYPES: MeetingType[] = [
   "coffee",
   "one_on_one",
   "call",
+  "breakfast",
   "lunch",
   "dinner",
+  "drinks",
+  "walk",
+  "on_site",
   "other",
 ];
 
@@ -37,9 +54,16 @@ export interface CustomEventDraft {
   endsAt: string | null;
   location: string;
   note: string;
+  /** Optional link on the event (http/https). Empty string => no link. */
+  url: string;
   withName: string;
   withCompany: string;
   meetingType: MeetingType | null;
+}
+
+/** A full http(s) URL — matches the server's `^https?://.` guard (migration 007). */
+export function isValidEventUrl(raw: string): boolean {
+  return /^https?:\/\/.+/i.test(raw.trim());
 }
 
 function orNull(s: string): string | null {
@@ -65,6 +89,7 @@ export async function saveCustomEvent(
     p_ends_at: d.endsAt,
     p_location: orNull(d.location),
     p_note: orNull(d.note),
+    p_url: orNull(d.url),
     p_with_name: isMeeting ? orNull(d.withName) : null,
     p_with_company: isMeeting ? orNull(d.withCompany) : null,
     p_meeting_type: isMeeting ? d.meetingType : null,

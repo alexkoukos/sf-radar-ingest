@@ -21,9 +21,11 @@ hours — that block was removed in commit a96e2e1.
 | 003 | `003_groups.sql`                           | groups / group_members / custom_events / rate_limits + functions                 | **committed** (plpgsql funcs were DOA until 004 §1; anon grants closed by 004 §0) |
 | 004 | `004_reconcile_001_and_fix_003.sql`       | reapply 001 into post-003 state + fixes, single transaction                       | **run 2026-09-08** |
 | 005 | `005_fix_returns_table_column_ambiguity.sql` | `#variable_conflict use_column` fix for 42702 in the `RETURNS TABLE` funcs      | **run 2026-09-08**, right after 004 |
+| 007 | `007_custom_event_url_and_meeting_types.sql` | custom_events: add `url`; widen `meeting_type` (breakfast/drinks/walk/on_site); +`p_url` on `upsert_custom_event`; `url` in `group_view` shared branch | **run 2026-09-08**, verified (one `upsert_custom_event`, 15 args) |
 
-Live plan/group schema of record = **003 + 004 + 005**. 001 is kept only as the
-historical record of the first attempt.
+Live plan/group schema of record = **003 + 004 + 005 + 007**. 001 is kept only
+as the historical record of the first attempt. `006` is still unclaimed —
+reserved below for the legacy-locked CHECK cleanup.
 
 ## Pending cleanup after orphan purge
 
