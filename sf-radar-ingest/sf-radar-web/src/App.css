@@ -1125,3 +1125,86 @@
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-divider);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Mobile pass (iPhone SE 375px / standard 390px). Everything here is scoped
+   to <=480px so desktop layout is byte-for-byte unchanged. Targets: no
+   iOS zoom-on-focus (16px controls), 44px touch targets, scroll-row
+   discoverability, hero header wrap safety.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  /* — G1: 16px form controls so Safari doesn't zoom the viewport on focus — */
+  .input,
+  select.input,
+  textarea.input,
+  .hero__arrive-input,
+  .hub-name-inline {
+    font-size: 16px;
+  }
+  .input,
+  select.input {
+    min-height: 44px;
+  }
+  .hero__arrive-input {
+    min-height: 40px;
+  }
+  .hub-name-inline {
+    min-height: 40px;
+  }
+
+  /* — G2: 44px minimum touch targets — */
+  .btn {
+    min-height: 44px;
+  }
+  .btn-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .chip,
+  .sort-pill {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* — M2: bare <summary> rows were ~18px tall — */
+  .hub-sub-more > summary,
+  .hub-group__settings > summary {
+    padding: var(--space-2) 0;
+  }
+
+  /* — M1: modal close button clearance + long-title wrap — */
+  .ev-modal .card-kicker {
+    padding-right: 44px;
+  }
+  .dialog-title {
+    overflow-wrap: anywhere;
+  }
+
+  /* — H1: keep the hero's left column from being crushed or overflowing — */
+  .hero__top > div:first-child {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .hero__nav {
+    min-width: 0;
+  }
+  .hero__heading {
+    overflow-wrap: anywhere;
+  }
+  .hero__stats {
+    text-align: left;
+  }
+
+  /* — G3: trailing fade so scroll rows read as "more →", not "cut off" — */
+  .sort-row,
+  .filter-chips {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+  }
+
+  /* — SP1: Download .ics button was flush against the wrapper border — */
+  .plan-actions {
+    padding: var(--space-3);
+  }
+}
