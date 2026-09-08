@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/plan/:slug", "destination": "/index.html" },
+    { "source": "/plan/:slug", "destination": "/" },
     { "source": "/group/feed/:token", "destination": "/api/group/feed/:token" },
-    { "source": "/group/:slug", "destination": "/index.html" },
+    { "source": "/group/:slug", "destination": "/" },
     { "source": "/feed/:slug", "destination": "/api/feed/:slug" }
   ],
   "headers": [
