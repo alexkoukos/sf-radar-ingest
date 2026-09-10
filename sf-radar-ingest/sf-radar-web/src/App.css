@@ -488,6 +488,67 @@
   border-color: #fff;
 }
 
+/* — per-card local flags: "seen" (reviewed) and "hide". localStorage only,
+   never synced, independent of Attending. A seen card stays in the list but
+   fades so genuinely new events stand out; hovering/focusing it brings it
+   back to legible for a re-read. — */
+.ev-card--seen {
+  opacity: 0.5;
+}
+.ev-card--seen:hover,
+.ev-card--seen:focus-within {
+  opacity: 0.9;
+}
+
+.ev-card__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ev-card__act {
+  flex: 1;
+  padding: 5px 8px;
+  font: 600 11px var(--font-body);
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.ev-card__act:hover {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+.ev-card__act--on {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.ev-card--rank-1 .ev-card__act {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+.ev-card--rank-1 .ev-card__act:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.ev-card--rank-1 .ev-card__act--on {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+}
+
+.ev-hidden-note {
+  margin: 0 0 var(--space-6);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.ev-hidden-note .linklike {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--color-accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* — logged (self-authored) plan entries: dashed, no rank/score — personal
    plan, not a ranked event. — */
 .ev-card--logged {
@@ -1267,5 +1328,10 @@
     max-width: 100%;
     border: 0;
     padding: 0;
+  }
+
+  /* — 44px touch targets for the per-card Seen / Hide controls — */
+  .ev-card__act {
+    min-height: 44px;
   }
 }
