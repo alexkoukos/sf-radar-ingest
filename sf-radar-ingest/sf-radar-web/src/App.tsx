@@ -80,6 +80,10 @@ function App() {
   const [newcomerFriendlyOnly, setNewcomerFriendlyOnly] = useState(false);
   const [freeAndOpenOnly, setFreeAndOpenOnly] = useState(false);
   const [myPlanOnly, setMyPlanOnly] = useState(false);
+  // VIEW-row subset filters over the local eventFlags. Part of the same
+  // 0-or-1-active group as myPlanOnly / "Tonight only".
+  const [seenOnly, setSeenOnly] = useState(false);
+  const [hiddenOnly, setHiddenOnly] = useState(false);
   const [plan, setPlan] = useState<LocalPlan>({ attending: {}, logged: [] });
   const [startDateStr, setStartDateStr] = useState<string | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
@@ -193,16 +197,23 @@ function App() {
   );
 
   const hiddenIds = useMemo(() => new Set(Object.keys(eventFlags.hidden)), [eventFlags.hidden]);
+  const seenIds = useMemo(() => new Set(Object.keys(eventFlags.seen)), [eventFlags.seen]);
 
   const visibleEvents = useMemo(() => {
     let list = selectedNight !== null ? (eventsByNight.get(selectedNight) ?? []) : windowEvents;
-    if (hiddenIds.size) list = list.filter((e) => !hiddenIds.has(e.api_id));
+    if (hiddenOnly) {
+      // "Hidden" view: the hidden set is the whole list, nothing else excluded.
+      list = list.filter((e) => hiddenIds.has(e.api_id));
+    } else {
+      if (hiddenIds.size) list = list.filter((e) => !hiddenIds.has(e.api_id));
+      if (seenOnly) list = list.filter((e) => seenIds.has(e.api_id));
+    }
     if (activeCategory) list = list.filter((e) => e.category === activeCategory);
     if (newcomerFriendlyOnly) list = list.filter(isNewcomerFriendly);
     if (freeAndOpenOnly) list = list.filter(isFreeAndOpen);
     if (myPlanOnly) list = list.filter((e) => plan.attending[e.api_id]);
     return list;
-  }, [windowEvents, eventsByNight, selectedNight, hiddenIds, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly, plan]);
+  }, [windowEvents, eventsByNight, selectedNight, hiddenIds, seenIds, hiddenOnly, seenOnly, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly, plan]);
 
   // The all-nights list is paged; the single-night list is shown whole. Rank
   // numbers come from the index within visibleEvents, so slicing off the tail
@@ -216,7 +227,13 @@ function App() {
   // appending onto the previous offset.
   useEffect(() => {
     setVisibleCount(BATCH_SIZE);
-  }, [selectedNight, startOffset, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly]);
+  }, [selectedNight, startOffset, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly, seenOnly, hiddenOnly]);
+
+  // Unhiding cards one by one in the "Hidden" view ends on an empty list;
+  // drop back to the default view rather than stranding the user there.
+  useEffect(() => {
+    if (hiddenOnly && hiddenIds.size === 0) setHiddenOnly(false);
+  }, [hiddenOnly, hiddenIds]);
 
   // Infinite scroll: grow the list when the sentinel under it nears the
   // viewport. The visible "Load more" button is the tap fallback and the
@@ -326,9 +343,12 @@ function App() {
     });
   }
 
-  function hideEvent(apiId: string) {
+  function toggleHidden(apiId: string) {
     setEventFlags((prev) => {
-      const next = { ...prev, hidden: { ...prev.hidden, [apiId]: Date.now() } };
+      const hidden = { ...prev.hidden };
+      if (hidden[apiId]) delete hidden[apiId]; // "Unhide" from the Hidden view
+      else hidden[apiId] = Date.now();
+      const next = { ...prev, hidden };
       saveEventFlags(next);
       return next;
     });
@@ -390,23 +410,37 @@ function App() {
     });
   }
 
-  // My Plan and Tonight Only are two "view" toggles that can each be
-  // independently on/off but never simultaneously on - clicking one that's
-  // about to turn on deactivates the other if it was active. Neither-active
-  // remains a valid (and default) state.
+  // The VIEW row - My Plan / Tonight only / Seen / Hidden - is one
+  // mutually-exclusive group: turning any on clears the other three.
+  // "None active" is the valid default. Only "Tonight only" also touches
+  // selectedNight (which it shares with the strip); the others leave a
+  // strip-selected night alone so they compose with night navigation.
+  function clearOtherViews(keep: "myPlan" | "tonight" | "seen" | "hidden") {
+    if (keep !== "myPlan") setMyPlanOnly(false);
+    if (keep !== "tonight" && selectedNight === startOffset) setSelectedNight(null);
+    if (keep !== "seen") setSeenOnly(false);
+    if (keep !== "hidden") setHiddenOnly(false);
+  }
+
   function toggleMyPlanOnly() {
-    if (!myPlanOnly && selectedNight === startOffset) {
-      setSelectedNight(null);
-    }
+    if (!myPlanOnly) clearOtherViews("myPlan");
     setMyPlanOnly((v) => !v);
   }
 
   function toggleTonightOnly() {
     const isActive = selectedNight === startOffset;
-    if (!isActive && myPlanOnly) {
-      setMyPlanOnly(false);
-    }
+    if (!isActive) clearOtherViews("tonight");
     setSelectedNight(isActive ? null : startOffset);
+  }
+
+  function toggleSeenOnly() {
+    if (!seenOnly) clearOtherViews("seen");
+    setSeenOnly((v) => !v);
+  }
+
+  function toggleHiddenOnly() {
+    if (!hiddenOnly) clearOtherViews("hidden");
+    setHiddenOnly((v) => !v);
   }
 
   const showSkeleton = loading && events.length === 0;
@@ -565,6 +599,10 @@ function App() {
           onToggleMyPlan={toggleMyPlanOnly}
           tonightOnly={selectedNight === startOffset}
           onToggleTonight={toggleTonightOnly}
+          seenOnly={seenOnly}
+          onToggleSeenOnly={toggleSeenOnly}
+          hiddenOnly={hiddenOnly}
+          onToggleHiddenOnly={toggleHiddenOnly}
         />
       )}
 
@@ -596,7 +634,13 @@ function App() {
         <p>No events in this window.</p>
       )}
       {!showSkeleton && windowEvents.length > 0 && visibleEvents.length === 0 && visibleLogged.length === 0 && (
-        <p>No events match these filters.</p>
+        <p>
+          {seenOnly
+            ? "No events marked seen yet."
+            : hiddenOnly
+              ? "Nothing hidden."
+              : "No events match these filters."}
+        </p>
       )}
 
       <ul className="ev-grid">
@@ -607,9 +651,10 @@ function App() {
             rank={i + 1}
             attending={!!plan.attending[event.api_id]}
             seen={!!eventFlags.seen[event.api_id]}
+            view={hiddenOnly ? "hidden" : seenOnly ? "seen" : "default"}
             onToggleAttend={toggleAttend}
             onToggleSeen={toggleSeen}
-            onHide={hideEvent}
+            onToggleHidden={toggleHidden}
             onSelect={setSelectedEvent}
           />
         ))}
@@ -635,11 +680,15 @@ function App() {
         </div>
       )}
 
-      {events.length > 0 && hiddenIds.size > 0 && (
+      {events.length > 0 && hiddenIds.size > 0 && !hiddenOnly && (
         <p className="ev-hidden-note">
-          {hiddenIds.size} event{hiddenIds.size === 1 ? "" : "s"} hidden from the list ·{" "}
+          {hiddenIds.size} event{hiddenIds.size === 1 ? "" : "s"} hidden ·{" "}
+          <button type="button" className="linklike" onClick={() => toggleHiddenOnly()}>
+            review
+          </button>
+          {" · "}
           <button type="button" className="linklike" onClick={clearHidden}>
-            show all
+            unhide all
           </button>
         </p>
       )}

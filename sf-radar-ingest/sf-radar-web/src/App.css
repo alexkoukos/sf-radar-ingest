@@ -278,15 +278,25 @@
   color: #fff;
 }
 
-/* — view toggle: My Plan / Tonight only - mutually exclusive (0 or 1
-   active), its own row so it reads as a distinct "view" control instead of
-   a 4th/5th sort pill sharing the Sort row. Only 2 short pills, so no
-   horizontal-scroll treatment needed here. */
+/* — view toggle: My Plan / Tonight only / Seen / Hidden - one
+   mutually-exclusive group (0 or 1 active), its own row so it reads as a
+   distinct "view" control instead of extra sort pills. Four pills plus a
+   label overflow ~360px, so it gets the same non-wrapping horizontal-scroll
+   treatment as .sort-row / .filter-chips. */
 .view-toggle {
   display: flex;
   gap: 8px;
   align-items: center;
   margin-bottom: var(--space-3);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.view-toggle::-webkit-scrollbar {
+  display: none;
 }
 
 .view-toggle__label {
@@ -1292,6 +1302,7 @@
 
   /* — G3: trailing fade so scroll rows read as "more →", not "cut off" — */
   .sort-row,
+  .view-toggle,
   .filter-chips {
     -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
     mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);

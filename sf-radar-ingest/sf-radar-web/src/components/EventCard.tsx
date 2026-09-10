@@ -8,9 +8,15 @@ interface EventCardProps {
   attending: boolean;
   /** Local "reviewed" flag (localStorage only, independent of attending). */
   seen: boolean;
+  /**
+   * Which VIEW-row filter is active. "seen" and "hidden" narrow the list to
+   * that subset, so the inline dim / "Seen" tag are dropped as redundant and
+   * the hide control flips to "Unhide".
+   */
+  view: "default" | "seen" | "hidden";
   onToggleAttend: (apiId: string) => void;
   onToggleSeen: (apiId: string) => void;
-  onHide: (apiId: string) => void;
+  onToggleHidden: (apiId: string) => void;
   onSelect: (event: DashboardEvent) => void;
 }
 
@@ -40,17 +46,19 @@ function EventCard({
   rank,
   attending,
   seen,
+  view,
   onToggleAttend,
   onToggleSeen,
-  onHide,
+  onToggleHidden,
   onSelect,
 }: EventCardProps) {
   const gated = isGated(event);
   const score = event.score ?? 0;
+  const dimAsSeen = seen && view === "default";
 
   return (
     <li
-      className={`card ev-card ${tierClass(rank)}${seen ? " ev-card--seen" : ""}`}
+      className={`card ev-card ${tierClass(rank)}${dimAsSeen ? " ev-card--seen" : ""}`}
       role="button"
       tabIndex={0}
       onClick={() => onSelect(event)}
@@ -76,7 +84,7 @@ function EventCard({
         {event.host_name && <span>{event.host_name}</span>}
       </div>
       <div className="ev-card__tags">
-        {seen && <span className="tag tag-outline">Seen ✓</span>}
+        {dimAsSeen && <span className="tag tag-outline">Seen ✓</span>}
         <span className={event.is_free ? "tag tag-accent" : "tag tag-neutral"}>{formatPrice(event)}</span>
         <span className={gated ? "tag tag-neutral" : "tag tag-accent-2"}>{rsvpLabel(event.rsvp_type)}</span>
         {gated && <span className="tag tag-outline">Harder to get into</span>}
@@ -107,14 +115,14 @@ function EventCard({
         </button>
         <button
           type="button"
-          className="ev-card__act"
+          className={`ev-card__act${view === "hidden" ? " ev-card__act--on" : ""}`}
           onClick={(e) => {
             e.stopPropagation();
-            onHide(event.api_id);
+            onToggleHidden(event.api_id);
           }}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          Hide
+          {view === "hidden" ? "Unhide" : "Hide"}
         </button>
       </div>
     </li>
