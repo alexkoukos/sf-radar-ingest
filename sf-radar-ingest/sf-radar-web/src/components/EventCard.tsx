@@ -6,7 +6,11 @@ interface EventCardProps {
   event: DashboardEvent;
   rank: number;
   attending: boolean;
+  /** Local "reviewed" flag (localStorage only, independent of attending). */
+  seen: boolean;
   onToggleAttend: (apiId: string) => void;
+  onToggleSeen: (apiId: string) => void;
+  onHide: (apiId: string) => void;
   onSelect: (event: DashboardEvent) => void;
 }
 
@@ -26,18 +30,35 @@ function formatRank(rank: number): string {
  * discrete rank tiers (1 / top-3 / rest) rather than a continuous fill,
  * since the Modernist card grid ranks by position, not by a score-driven
  * gradient. Paid/gated events are flagged, never hidden.
+ *
+ * "Seen" and "Hide" are personal, local-only (see lib/eventFlags.ts): a seen
+ * card dims but stays; a hidden card is filtered out upstream and never
+ * reaches this component.
  */
-function EventCard({ event, rank, attending, onToggleAttend, onSelect }: EventCardProps) {
+function EventCard({
+  event,
+  rank,
+  attending,
+  seen,
+  onToggleAttend,
+  onToggleSeen,
+  onHide,
+  onSelect,
+}: EventCardProps) {
   const gated = isGated(event);
   const score = event.score ?? 0;
 
   return (
     <li
-      className={`card ev-card ${tierClass(rank)}`}
+      className={`card ev-card ${tierClass(rank)}${seen ? " ev-card--seen" : ""}`}
       role="button"
       tabIndex={0}
       onClick={() => onSelect(event)}
       onKeyDown={(e) => {
+        // Only when the keystroke lands on the card itself, not on a nested
+        // control (Attend / Seen / Hide), so activating those never also
+        // opens the modal.
+        if (e.target !== e.currentTarget) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect(event);
@@ -55,6 +76,7 @@ function EventCard({ event, rank, attending, onToggleAttend, onSelect }: EventCa
         {event.host_name && <span>{event.host_name}</span>}
       </div>
       <div className="ev-card__tags">
+        {seen && <span className="tag tag-outline">Seen ✓</span>}
         <span className={event.is_free ? "tag tag-accent" : "tag tag-neutral"}>{formatPrice(event)}</span>
         <span className={gated ? "tag tag-neutral" : "tag tag-accent-2"}>{rsvpLabel(event.rsvp_type)}</span>
         {gated && <span className="tag tag-outline">Harder to get into</span>}
@@ -66,9 +88,35 @@ function EventCard({ event, rank, attending, onToggleAttend, onSelect }: EventCa
           e.stopPropagation();
           onToggleAttend(event.api_id);
         }}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         {attending ? "Attending ✓" : "Attend"}
       </button>
+      <div className="ev-card__actions">
+        <button
+          type="button"
+          className={`ev-card__act${seen ? " ev-card__act--on" : ""}`}
+          aria-pressed={seen}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSeen(event.api_id);
+          }}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          {seen ? "Seen ✓" : "Mark seen"}
+        </button>
+        <button
+          type="button"
+          className="ev-card__act"
+          onClick={(e) => {
+            e.stopPropagation();
+            onHide(event.api_id);
+          }}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          Hide
+        </button>
+      </div>
     </li>
   );
 }

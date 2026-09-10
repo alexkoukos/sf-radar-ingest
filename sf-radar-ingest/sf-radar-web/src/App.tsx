@@ -10,6 +10,7 @@ import {
 } from "./lib/timeBoundaries";
 import { loadCachedEvents, saveCachedEvents } from "./lib/storage";
 import { createLoggedId, loadLocalPlan, saveLocalPlan, type LocalPlan } from "./lib/localPlan";
+import { loadEventFlags, saveEventFlags, type EventFlags } from "./lib/eventFlags";
 import { loadStartDate, saveStartDate } from "./lib/startDate";
 import { GROUP_CHANGED_EVENT, loadGroupMembership, type GroupMembership } from "./lib/groupMembership";
 import { laZoneAbbrev } from "./lib/eventFormat";
@@ -84,6 +85,10 @@ function App() {
   const [showLogForm, setShowLogForm] = useState(false);
   const [logToast, setLogToast] = useState<string | null>(null);
   const [group, setGroup] = useState<GroupMembership | null>(null);
+  // Personal, local-only per-event flags: "seen" (dim, still listed) and
+  // "hidden" (dropped from the list). Keyed by api_id, never synced, and
+  // fully independent of plan.attending.
+  const [eventFlags, setEventFlags] = useState<EventFlags>({ seen: {}, hidden: {} });
   // How many events the all-nights list currently shows. Reset to BATCH_SIZE
   // whenever the list identity changes (filters, sort, window anchor, or
   // entering/leaving a single night) so a new filter starts at batch one
@@ -95,6 +100,8 @@ function App() {
     setPlan(loadLocalPlan());
     setStartDateStr(loadStartDate());
     setGroup(loadGroupMembership());
+    setEventFlags(loadEventFlags()); // prunes entries older than 180 days
+
     const onGroupChange = () => setGroup(loadGroupMembership());
     window.addEventListener(GROUP_CHANGED_EVENT, onGroupChange);
     window.addEventListener("storage", onGroupChange); // other tabs
@@ -185,14 +192,17 @@ function App() {
     [windowEvents],
   );
 
+  const hiddenIds = useMemo(() => new Set(Object.keys(eventFlags.hidden)), [eventFlags.hidden]);
+
   const visibleEvents = useMemo(() => {
     let list = selectedNight !== null ? (eventsByNight.get(selectedNight) ?? []) : windowEvents;
+    if (hiddenIds.size) list = list.filter((e) => !hiddenIds.has(e.api_id));
     if (activeCategory) list = list.filter((e) => e.category === activeCategory);
     if (newcomerFriendlyOnly) list = list.filter(isNewcomerFriendly);
     if (freeAndOpenOnly) list = list.filter(isFreeAndOpen);
     if (myPlanOnly) list = list.filter((e) => plan.attending[e.api_id]);
     return list;
-  }, [windowEvents, eventsByNight, selectedNight, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly, plan]);
+  }, [windowEvents, eventsByNight, selectedNight, hiddenIds, activeCategory, newcomerFriendlyOnly, freeAndOpenOnly, myPlanOnly, plan]);
 
   // The all-nights list is paged; the single-night list is shown whole. Rank
   // numbers come from the index within visibleEvents, so slicing off the tail
@@ -301,6 +311,33 @@ function App() {
     setPlan((prev) => {
       const next = { ...prev, attending: { ...prev.attending, [apiId]: !prev.attending[apiId] } };
       saveLocalPlan(next);
+      return next;
+    });
+  }
+
+  function toggleSeen(apiId: string) {
+    setEventFlags((prev) => {
+      const seen = { ...prev.seen };
+      if (seen[apiId]) delete seen[apiId];
+      else seen[apiId] = Date.now();
+      const next = { ...prev, seen };
+      saveEventFlags(next);
+      return next;
+    });
+  }
+
+  function hideEvent(apiId: string) {
+    setEventFlags((prev) => {
+      const next = { ...prev, hidden: { ...prev.hidden, [apiId]: Date.now() } };
+      saveEventFlags(next);
+      return next;
+    });
+  }
+
+  function clearHidden() {
+    setEventFlags((prev) => {
+      const next = { ...prev, hidden: {} };
+      saveEventFlags(next);
       return next;
     });
   }
@@ -569,7 +606,10 @@ function App() {
             event={event}
             rank={i + 1}
             attending={!!plan.attending[event.api_id]}
+            seen={!!eventFlags.seen[event.api_id]}
             onToggleAttend={toggleAttend}
+            onToggleSeen={toggleSeen}
+            onHide={hideEvent}
             onSelect={setSelectedEvent}
           />
         ))}
@@ -593,6 +633,15 @@ function App() {
             Load more · {visibleEvents.length - visibleCount} left
           </button>
         </div>
+      )}
+
+      {events.length > 0 && hiddenIds.size > 0 && (
+        <p className="ev-hidden-note">
+          {hiddenIds.size} event{hiddenIds.size === 1 ? "" : "s"} hidden from the list ·{" "}
+          <button type="button" className="linklike" onClick={clearHidden}>
+            show all
+          </button>
+        </p>
       )}
 
       <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
