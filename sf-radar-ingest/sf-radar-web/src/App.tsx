@@ -267,8 +267,19 @@ function App() {
   }, [windowNights, eventsByNight]);
 
   const rangeLabel = windowNights
-    ? `${rangeFormatter.format(windowNights[0].start)} to ${rangeFormatter.format(windowNights[windowNights.length - 1].start)}`
+    ? `${rangeFormatter.format(windowNights[0].start)} – ${rangeFormatter.format(windowNights[windowNights.length - 1].start)}`
     : null;
+
+  // The honest "how fresh is this" stamp: the newest last_seen_at in the
+  // payload is the last ingest run that actually saw these events.
+  const lastUpdated = useMemo(() => {
+    let latest = 0;
+    for (const e of events) {
+      const t = Date.parse(e.last_seen_at);
+      if (t > latest) latest = t;
+    }
+    return latest ? new Date(latest) : null;
+  }, [events]);
 
   // Which nights carry either a ranked "Attending" pick or a self-logged
   // entry - drives both the strip's booked fill and the plan counter, and
@@ -443,6 +454,19 @@ function App() {
     setHiddenOnly((v) => !v);
   }
 
+  // The empty-state exit: drop every filter and view, keep the night choice.
+  function clearFilters() {
+    setActiveCategory(null);
+    setNewcomerFriendlyOnly(false);
+    setFreeAndOpenOnly(false);
+    setMyPlanOnly(false);
+    setSeenOnly(false);
+    setHiddenOnly(false);
+  }
+
+  const filtersActive =
+    activeCategory !== null || newcomerFriendlyOnly || freeAndOpenOnly || myPlanOnly || seenOnly || hiddenOnly;
+
   const showSkeleton = loading && events.length === 0;
   const nightsPlannedCount = bookedNightIndices.size;
   // The hub (GROUP / SHARE / CALENDAR) sits at the top, directly under the
@@ -452,78 +476,155 @@ function App() {
   const hubVisible = events.length > 0;
 
   return (
-    <main className="dashboard">
-      <nav className="nav">
-        <a className="nav-brand" href="/">SF RADAR</a>
-        {group && (
-          <a className="nav__group" href={`/group/${group.slug}`} title={`Group: ${group.name}`}>
-            <span className="nav__group-dot" style={{ background: group.color }} aria-hidden="true" />
-            <span className="nav__group-name">{group.name}</span>
+    <>
+      <a className="skip-link" href="#events">Skip to events</a>
+      <main className="dashboard">
+        <nav className="nav" aria-label="Main">
+          <a className="nav-brand" href="/" translate="no">
+            SF Radar<span className="dot-red">.</span>
           </a>
+          {group && (
+            <a className="nav__group" href={`/group/${group.slug}`} title={`Group: ${group.name}`}>
+              <span className="nav__group-dot" style={{ background: group.color }} aria-hidden="true" />
+              <span className="nav__group-name">{group.name}</span>
+            </a>
+          )}
+          <button
+            type="button"
+            className="btn btn-secondary nav__log"
+            aria-expanded={showLogForm}
+            onClick={() => setShowLogForm((v) => !v)}
+          >
+            {showLogForm ? "Cancel" : "+ Log a night"}
+          </button>
+        </nav>
+
+        {showLogForm && windowNights && (
+          <LogNightForm
+            nights={windowNights}
+            defaultNightIndex={selectedNight ?? startOffset}
+            onAdd={addLoggedNight}
+            onCancel={() => setShowLogForm(false)}
+          />
         )}
-        <button
-          type="button"
-          className="btn btn-primary nav__log"
-          onClick={() => setShowLogForm((v) => !v)}
-        >
-          {showLogForm ? "Cancel" : "+ Log a night"}
-        </button>
-      </nav>
 
-      {showLogForm && windowNights && (
-        <LogNightForm
-          nights={windowNights}
-          defaultNightIndex={selectedNight ?? startOffset}
-          onAdd={addLoggedNight}
-          onCancel={() => setShowLogForm(false)}
-        />
-      )}
+        <div aria-live="polite">
+          {logToast && (
+            <p className="log-toast plan-actions__toast" role="status">
+              {logToast}
+            </p>
+          )}
+        </div>
 
-      {logToast && (
-        <p className="log-toast plan-actions__toast" role="status">
-          {logToast}
-        </p>
-      )}
+        {staleSince && (
+          <p className="banner banner--stale" role="status">
+            <strong>Offline copy.</strong> Showing events saved {staleTimestampFormatter.format(new Date(staleSince))}{" "}
+            {laZoneAbbrev(new Date(staleSince))}. We couldn't reach the server{error ? ` (${error})` : ""}. Reload to try again.
+          </p>
+        )}
+        {!staleSince && error && events.length === 0 && (
+          <p className="banner banner--error" role="alert">
+            <strong>Couldn't load events.</strong> {error}. Check your connection and reload the page.
+          </p>
+        )}
 
-      {staleSince && (
-        <p className="banner banner--stale">
-          Showing data from {staleTimestampFormatter.format(new Date(staleSince))}{" "}
-          {laZoneAbbrev(new Date(staleSince))}. Couldn't refresh
-          {error ? `: ${error}` : "."}
-        </p>
-      )}
-      {!staleSince && error && events.length === 0 && (
-        <p className="banner banner--error">Couldn't load events: {error}</p>
-      )}
-
-      {hubVisible && (
-        <PlanActions
-          attendingEvents={attendingEvents}
-          loggedNights={planLoggedNights}
-          startDate={startDateStr}
-        />
-      )}
-
-      <div className="hero">
-        <div className="hero__top">
-          <div>
-            <div className="hero__range-row">
-              {rangeLabel && <div className="hero__range">San Francisco &middot; {rangeLabel}</div>}
-              {todayStr && (
-                <label className="hero__arrive">
-                  <span>Arriving</span>
-                  <input
-                    type="date"
-                    className="input hero__arrive-input"
-                    value={startDateStr ?? todayStr}
-                    min={todayStr}
-                    max={maxStartDateStr ?? undefined}
-                    onChange={(e) => handleStartDateChange(e.target.value)}
-                  />
-                </label>
+        <header className="hero">
+          <p className="eyebrow hero__eyebrow">
+            San Francisco{rangeLabel ? ` · ${rangeLabel}` : ""}
+          </p>
+          <h1 className="hero__title">
+            {WINDOW_DAYS} nights in SF.
+            <br />
+            Make each one count<span className="dot-red">.</span>
+          </h1>
+          <p className="hero__lead">
+            Tech, startup and investor events from Luma, ranked. Free, open events rank higher, because
+            the best event is one you can actually get into.
+          </p>
+          {events.length > 0 && (
+            <p className="hero__facts mono">
+              <span>
+                <strong className="num">{windowEvents.length}</strong> events
+              </span>
+              {windowNights && (
+                <span>
+                  <strong className="num">{nightsWithEvents}</strong>/{WINDOW_DAYS} nights covered
+                </span>
               )}
+              {lastUpdated && (
+                <span>
+                  Updated {staleTimestampFormatter.format(lastUpdated)} {laZoneAbbrev(lastUpdated)}
+                </span>
+              )}
+            </p>
+          )}
+        </header>
+
+        {hubVisible && (
+          <PlanActions
+            attendingEvents={attendingEvents}
+            loggedNights={planLoggedNights}
+            startDate={startDateStr}
+          />
+        )}
+
+        <section className="stay" aria-labelledby="stay-title">
+          <div className="stay__head">
+            <div className="stay__titles">
+              <h2 id="stay-title" className="section-title">
+                <span className="section-title__num" aria-hidden="true">01.</span> Your stay
+              </h2>
+              <p className="stay__progress">
+                <strong className="num">{nightsPlannedCount}</strong> of {WINDOW_DAYS} nights planned
+              </p>
             </div>
-            <div className="hero__nav">
+            {todayStr && (
+              <label className="stay__arrive">
+                <span className="eyebrow">Arriving</span>
+                <input
+                  type="date"
+                  name="arrival"
+                  autoComplete="off"
+                  className="input stay__arrive-input"
+                  value={startDateStr ?? todayStr}
+                  min={todayStr}
+                  max={maxStartDateStr ?? undefined}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
+                />
+              </label>
+            )}
+          </div>
+          <div
+            className="progress"
+            role="progressbar"
+            aria-label="Nights planned"
+            aria-valuemin={0}
+            aria-valuemax={WINDOW_DAYS}
+            aria-valuenow={nightsPlannedCount}
+          >
+            <span className="progress__fill" style={{ width: `${(Math.min(nightsPlannedCount, WINDOW_DAYS) / WINDOW_DAYS) * 100}%` }} />
+          </div>
+          <p className="stay__hint text-muted">
+            {nightsPlannedCount === 0
+              ? "Tap a night to see its best events, then add one to your plan."
+              : nightsPlannedCount >= WINDOW_DAYS
+                ? "Every night has a plan. Enjoy the city."
+                : `${WINDOW_DAYS - nightsPlannedCount} nights still open.`}
+          </p>
+
+          {showSkeleton && <div className="night-strip night-strip--skeleton" aria-hidden="true" />}
+          {windowNights && events.length > 0 && (
+            <NightStrip
+              nights={windowNights}
+              eventsByNight={eventsByNight}
+              selected={selectedNight}
+              onSelect={setSelectedNight}
+              bookedNights={bookedNightIndices}
+            />
+          )}
+
+          {windowNights && events.length > 0 && (
+            <div className="night-nav">
               <button
                 type="button"
                 className="btn btn-icon btn-secondary"
@@ -533,18 +634,19 @@ function App() {
               >
                 ←
               </button>
-              <h2 className="hero__heading">
+              <p className="night-nav__label" aria-live="polite">
                 {selectedNight === null || !wideNights ? (
                   <>
-                    Your Stay <span className="text-muted hero__sub">· all {WINDOW_DAYS} nights</span>
+                    <strong>All {WINDOW_DAYS} nights</strong>
+                    <span className="text-muted"> · tap a night to focus</span>
                   </>
                 ) : (
                   <>
-                    <span className="hero__night-accent">Night {selectedNight - startOffset + 1}</span> of {WINDOW_DAYS}{" "}
-                    <span className="text-muted hero__sub">· {nightHeadingFormatter.format(wideNights[selectedNight].start)}</span>
+                    <strong>Night {selectedNight - startOffset + 1}</strong>
+                    <span className="text-muted"> of {WINDOW_DAYS} · {nightHeadingFormatter.format(wideNights[selectedNight].start)}</span>
                   </>
                 )}
-              </h2>
+              </p>
               <button
                 type="button"
                 className="btn btn-icon btn-secondary"
@@ -555,150 +657,173 @@ function App() {
                 →
               </button>
             </div>
-          </div>
-          <div className="hero__stats">
-            {windowNights && events.length > 0 && (
-              <div className="hero__stat">
-                {nightsWithEvents} of {WINDOW_DAYS} nights have events
-              </div>
+          )}
+        </section>
+
+        <section className="picks" id="events" aria-labelledby="picks-title" tabIndex={-1}>
+          <h2 id="picks-title" className="section-title">
+            <span className="section-title__num" aria-hidden="true">02.</span> Ranked picks
+            {!showSkeleton && visibleEvents.length > 0 && (
+              <span className="section-title__count num"> {visibleEvents.length}</span>
             )}
-            <div className="hero__stat hero__stat--plan">
-              {nightsPlannedCount} {nightsPlannedCount === 1 ? "night" : "nights"} planned
+          </h2>
+
+          {events.length > 0 && (
+            <div className="controls">
+              <SortRow
+                sortMode={sortMode}
+                onBalanced={() => {
+                  setActiveCategory(null);
+                  setFreeAndOpenOnly(false);
+                }}
+                onInvestor={() => {
+                  setActiveCategory("INVESTOR_MEETUP");
+                  setFreeAndOpenOnly(false);
+                }}
+              />
+              <ViewToggle
+                myPlanOnly={myPlanOnly}
+                onToggleMyPlan={toggleMyPlanOnly}
+                tonightOnly={selectedNight === startOffset}
+                onToggleTonight={toggleTonightOnly}
+                seenOnly={seenOnly}
+                onToggleSeenOnly={toggleSeenOnly}
+                hiddenOnly={hiddenOnly}
+                onToggleHiddenOnly={toggleHiddenOnly}
+              />
+              <FilterChips
+                categories={categories}
+                activeCategory={activeCategory}
+                onCategoryChange={setActiveCategory}
+                newcomerFriendlyOnly={newcomerFriendlyOnly}
+                onToggleNewcomerFriendly={() => setNewcomerFriendlyOnly((v) => !v)}
+                freeAndOpenOnly={freeAndOpenOnly}
+                onToggleFreeAndOpen={() => setFreeAndOpenOnly((v) => !v)}
+              />
             </div>
-          </div>
-        </div>
+          )}
 
-        {windowNights && events.length > 0 && (
-          <NightStrip
-            nights={windowNights}
-            eventsByNight={eventsByNight}
-            selected={selectedNight}
-            onSelect={setSelectedNight}
-            bookedNights={bookedNightIndices}
-          />
-        )}
-      </div>
+          {selectedNight !== null && selectedNightConflictCount >= 2 && (
+            <p className="conflict-flag">
+              <strong>{selectedNightConflictCount} strong picks tonight.</strong> You can only make one. Pick the one you'd regret missing.
+            </p>
+          )}
 
-      {events.length > 0 && (
-        <SortRow
-          sortMode={sortMode}
-          onBalanced={() => {
-            setActiveCategory(null);
-            setFreeAndOpenOnly(false);
-          }}
-          onInvestor={() => {
-            setActiveCategory("INVESTOR_MEETUP");
-            setFreeAndOpenOnly(false);
-          }}
+          {showSkeleton && (
+            <ul className="ev-grid" aria-hidden="true">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <li className="card ev-card ev-card--skeleton" key={i}>
+                  <span className="sk sk--num" />
+                  <span className="sk sk--line" />
+                  <span className="sk sk--title" />
+                  <span className="sk sk--line sk--short" />
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!showSkeleton && !error && windowEvents.length === 0 && visibleLogged.length === 0 && (
+            <div className="empty">
+              <p className="empty__title">Nothing on the radar for these dates yet.</p>
+              <p className="text-muted">New events land every six hours. Try a different arrival date, or check back tonight.</p>
+            </div>
+          )}
+          {!showSkeleton && windowEvents.length > 0 && visibleEvents.length === 0 && visibleLogged.length === 0 && (
+            <div className="empty">
+              <p className="empty__title">
+                {seenOnly
+                  ? "Nothing marked seen yet."
+                  : hiddenOnly
+                    ? "Nothing hidden."
+                    : myPlanOnly
+                      ? "Your plan is empty."
+                      : "No events match these filters."}
+              </p>
+              <p className="text-muted">
+                {myPlanOnly
+                  ? "Add an event with “+ Add to plan” and it shows up here."
+                  : seenOnly
+                    ? "Tap “Mark seen” on events you've already checked out."
+                    : hiddenOnly
+                      ? "Events you hide land here, so you can bring them back."
+                      : "Loosen a filter to see more of the city."}
+              </p>
+              {filtersActive && (
+                <button type="button" className="btn btn-primary" onClick={clearFilters}>
+                  Show all events
+                </button>
+              )}
+            </div>
+          )}
+
+          <ul className="ev-grid">
+            {pagedEvents.map((event, i) => (
+              <EventCard
+                key={event.api_id}
+                event={event}
+                rank={i + 1}
+                attending={!!plan.attending[event.api_id]}
+                seen={!!eventFlags.seen[event.api_id]}
+                view={hiddenOnly ? "hidden" : seenOnly ? "seen" : "default"}
+                onToggleAttend={toggleAttend}
+                onToggleSeen={toggleSeen}
+                onToggleHidden={toggleHidden}
+                onSelect={setSelectedEvent}
+              />
+            ))}
+            {visibleLogged.map((logged) => (
+              <LoggedNightCard
+                key={logged.id}
+                logged={logged}
+                nightLabel={nightLabelFor(logged.nightIndex)}
+                onRemove={removeLoggedNight}
+              />
+            ))}
+          </ul>
+
+          {hasMoreEvents && (
+            <div className="ev-loadmore" ref={loadMoreRef}>
+              <button
+                type="button"
+                className="btn btn-secondary ev-loadmore__btn"
+                onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+              >
+                Show more · <span className="num">{visibleEvents.length - visibleCount}</span> left
+              </button>
+            </div>
+          )}
+
+          {events.length > 0 && hiddenIds.size > 0 && !hiddenOnly && (
+            <p className="ev-hidden-note">
+              {hiddenIds.size} event{hiddenIds.size === 1 ? "" : "s"} hidden ·{" "}
+              <button type="button" className="linklike" onClick={() => toggleHiddenOnly()}>
+                Review
+              </button>
+              {" · "}
+              <button type="button" className="linklike" onClick={clearHidden}>
+                Unhide all
+              </button>
+            </p>
+          )}
+        </section>
+
+        <EventModal
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          attending={selectedEvent ? !!plan.attending[selectedEvent.api_id] : false}
+          onToggleAttend={toggleAttend}
         />
-      )}
 
-      {events.length > 0 && (
-        <ViewToggle
-          myPlanOnly={myPlanOnly}
-          onToggleMyPlan={toggleMyPlanOnly}
-          tonightOnly={selectedNight === startOffset}
-          onToggleTonight={toggleTonightOnly}
-          seenOnly={seenOnly}
-          onToggleSeenOnly={toggleSeenOnly}
-          hiddenOnly={hiddenOnly}
-          onToggleHiddenOnly={toggleHiddenOnly}
-        />
-      )}
-
-      {selectedNight !== null && selectedNightConflictCount >= 2 && (
-        <p className="conflict-flag">{selectedNightConflictCount} strong picks tonight, you can only make one</p>
-      )}
-
-      {events.length > 0 && (
-        <FilterChips
-          categories={categories}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-          newcomerFriendlyOnly={newcomerFriendlyOnly}
-          onToggleNewcomerFriendly={() => setNewcomerFriendlyOnly((v) => !v)}
-          freeAndOpenOnly={freeAndOpenOnly}
-          onToggleFreeAndOpen={() => setFreeAndOpenOnly((v) => !v)}
-        />
-      )}
-
-      {showSkeleton && (
-        <ul className="ev-grid" aria-hidden="true">
-          {[0, 1, 2].map((i) => (
-            <li className="card ev-card ev-card--skeleton" key={i} />
-          ))}
-        </ul>
-      )}
-
-      {!showSkeleton && !error && windowEvents.length === 0 && visibleLogged.length === 0 && (
-        <p>No events in this window.</p>
-      )}
-      {!showSkeleton && windowEvents.length > 0 && visibleEvents.length === 0 && visibleLogged.length === 0 && (
-        <p>
-          {seenOnly
-            ? "No events marked seen yet."
-            : hiddenOnly
-              ? "Nothing hidden."
-              : "No events match these filters."}
-        </p>
-      )}
-
-      <ul className="ev-grid">
-        {pagedEvents.map((event, i) => (
-          <EventCard
-            key={event.api_id}
-            event={event}
-            rank={i + 1}
-            attending={!!plan.attending[event.api_id]}
-            seen={!!eventFlags.seen[event.api_id]}
-            view={hiddenOnly ? "hidden" : seenOnly ? "seen" : "default"}
-            onToggleAttend={toggleAttend}
-            onToggleSeen={toggleSeen}
-            onToggleHidden={toggleHidden}
-            onSelect={setSelectedEvent}
-          />
-        ))}
-        {visibleLogged.map((logged) => (
-          <LoggedNightCard
-            key={logged.id}
-            logged={logged}
-            nightLabel={nightLabelFor(logged.nightIndex)}
-            onRemove={removeLoggedNight}
-          />
-        ))}
-      </ul>
-
-      {hasMoreEvents && (
-        <div className="ev-loadmore" ref={loadMoreRef}>
-          <button
-            type="button"
-            className="btn btn-secondary ev-loadmore__btn"
-            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
-          >
-            Load more · {visibleEvents.length - visibleCount} left
-          </button>
-        </div>
-      )}
-
-      {events.length > 0 && hiddenIds.size > 0 && !hiddenOnly && (
-        <p className="ev-hidden-note">
-          {hiddenIds.size} event{hiddenIds.size === 1 ? "" : "s"} hidden ·{" "}
-          <button type="button" className="linklike" onClick={() => toggleHiddenOnly()}>
-            review
-          </button>
-          {" · "}
-          <button type="button" className="linklike" onClick={clearHidden}>
-            unhide all
-          </button>
-        </p>
-      )}
-
-      <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-
-      <footer className="app-footer">
-        Built by <a href="mailto:alex.koukos2006@gmail.com" className="app-footer__link">Alex Koukos</a> for the HH community ❤️
-      </footer>
-    </main>
+        <footer className="app-footer">
+          <p className="app-footer__line">
+            Fourteen nights go fast. See you out there<span className="dot-red">.</span>
+          </p>
+          <p className="text-muted">
+            Built by <a href="mailto:alex.koukos2006@gmail.com" className="app-footer__link">Alex Koukos</a> for the HH community. Events from Luma, times in Pacific.
+          </p>
+        </footer>
+      </main>
+    </>
   );
 }
 

@@ -19,7 +19,7 @@
 
 .grp__sub {
   margin: 0 0 var(--space-3);
-  font-size: 13px;
+  font-size: var(--text-14);
 }
 
 .grp__legend {
@@ -35,7 +35,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--text-12);
   font-weight: 600;
 }
 
@@ -62,7 +62,7 @@
 }
 
 .grp__filter-hint {
-  font-size: 11px;
+  font-size: var(--text-12);
   flex-basis: 100%;
 }
 
@@ -80,7 +80,7 @@
 
 .grp__empty {
   margin: var(--space-4) 0;
-  font-size: 14px;
+  font-size: var(--text-14);
   color: var(--color-text-secondary);
 }
 
@@ -111,20 +111,20 @@
 
 .grp__night--empty .grp__night-head {
   margin-bottom: 0;
-  font-size: 13px;
+  font-size: var(--text-14);
   font-weight: 600;
   color: color-mix(in srgb, var(--color-text) 45%, transparent);
 }
 
 .grp__night-out-tag {
-  font-size: 12px;
+  font-size: var(--text-12);
   font-weight: 400;
   color: color-mix(in srgb, var(--color-text) 50%, transparent);
 }
 
 .grp__night-none {
   margin: 2px 0 0;
-  font-size: 13px;
+  font-size: var(--text-14);
 }
 
 .grp__night-list {
@@ -199,7 +199,7 @@
 }
 
 .grp-card__owner-name {
-  font-size: 11px;
+  font-size: var(--text-12);
   font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: none;
@@ -212,7 +212,7 @@
 }
 
 .grp-card__title {
-  font-size: 16px;
+  font-size: var(--text-16);
   line-height: 1.25;
 }
 
@@ -237,7 +237,7 @@
 
 .grp-card__note {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: var(--text-12);
   color: color-mix(in srgb, var(--color-text) 70%, transparent);
 }
 
@@ -260,7 +260,7 @@
 }
 
 .grp-card__attendee-names {
-  font-size: 12px;
+  font-size: var(--text-12);
   font-weight: 600;
   color: color-mix(in srgb, var(--color-text) 75%, transparent);
   overflow-wrap: anywhere;
@@ -332,7 +332,7 @@
 }
 
 .grp-card__manage .btn {
-  font-size: 12px;
+  font-size: var(--text-12);
   padding: 2px 6px;
 }
 
@@ -405,12 +405,12 @@
 
 .ce-form__hint {
   margin: -4px 0 0;
-  font-size: 11px;
+  font-size: var(--text-12);
 }
 
 .ce-form__vis-opt {
   align-items: start;
-  font-size: 12px;
+  font-size: var(--text-12);
   line-height: 1.4;
 }
 
@@ -438,7 +438,7 @@
 
 .grp-gate__lead {
   margin: 0 0 var(--space-4);
-  font-size: 13px;
+  font-size: var(--text-14);
   line-height: 1.5;
 }
 
@@ -481,7 +481,7 @@
 }
 .grp-howto__lead {
   margin: 0 0 var(--space-3);
-  font-size: 12px;
+  font-size: var(--text-12);
   line-height: 1.5;
   color: color-mix(in srgb, var(--color-text) 75%, transparent);
 }
@@ -504,11 +504,11 @@
 }
 .grp-howto__list dd {
   margin: 0 0 var(--space-2);
-  font-size: 12px;
+  font-size: var(--text-12);
   line-height: 1.55;
 }
 .grp-howto__list code {
-  font-size: 11px;
+  font-size: var(--text-12);
   background: color-mix(in srgb, var(--color-text) 8%, transparent);
   padding: 0 3px;
   overflow-wrap: anywhere;
@@ -527,7 +527,7 @@
   .grp-card__manage .btn {
     min-height: 40px;
     padding: 6px 12px;
-    font-size: 13px;
+    font-size: var(--text-14);
   }
 
   /* — GP2: member-filter segments (~30px) — */
