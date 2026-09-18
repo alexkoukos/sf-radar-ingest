@@ -312,7 +312,7 @@ function App() {
             )}
           </p>
           <p>
-            Built by <a href="mailto:alex.koukos2006@gmail.com">Alex Koukos</a> for the HH community.
+            Built by <a href="https://www.linkedin.com/in/alexandros-koukos-952a42344" target="_blank" rel="noreferrer">Alex Koukos</a> for the HH community.
           </p>
         </footer>
       </main>
