@@ -5,7 +5,7 @@
 
 .page {
   width: 100%;
-  max-width: 680px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 max(var(--space-4), env(safe-area-inset-right)) var(--space-12) max(var(--space-4), env(safe-area-inset-left));
   min-width: 0;
@@ -35,6 +35,7 @@
 }
 .intro__lead {
   margin: 0;
+  max-width: 34em;
   font-size: var(--text-18);
   color: var(--color-text-secondary);
 }
@@ -114,20 +115,40 @@
 }
 .filter__button--active:hover { background: var(--color-neutral-800); }
 
-/* — the Filters panel (a dropdown, like a shop's filter list) — */
+/* — the Filters panel (a dropdown, like a shop's filter list) —
+   Always fully on screen: a bottom sheet on phones, a dropdown capped to
+   the viewport on wider screens. */
+.filter__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: rgb(0 0 0 / 0.35);
+}
 .filter__panel {
-  position: absolute;
+  position: fixed;
   z-index: 20;
-  top: calc(100% + var(--space-2));
-  left: 0;
-  width: min(100%, 380px);
-  max-height: min(70svh, 560px);
+  left: var(--space-2);
+  right: var(--space-2);
+  bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  max-height: min(80svh, 640px);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--space-4) var(--space-4) 0;
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-4);
+}
+@media (min-width: 640px) {
+  .filter__backdrop { display: none; }
+  .filter__panel {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    left: 0;
+    right: auto;
+    bottom: auto;
+    width: 380px;
+    max-height: min(560px, calc(100svh - 200px));
+  }
 }
 .filter__heading {
   margin: var(--space-2) 0 var(--space-1);
@@ -178,14 +199,24 @@
   letter-spacing: -0.01em;
 }
 
+/* One column on phones; a 2-up then 3-up grid when there's room. */
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-12) var(--space-8);
 }
+@media (min-width: 720px) {
+  .list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1040px) {
+  .list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* Keep each event's buttons on one baseline across a grid row. */
+.ev__body { display: flex; flex-direction: column; }
+.ev__actions { margin-top: auto; }
 
 /* — one event: no box, no line; space does the separating — */
 .ev {
