@@ -11,8 +11,7 @@ interface FilterOptionsProps {
 
 /**
  * The filter checkboxes themselves - plain labelled checkboxes, applied
- * instantly. Rendered in two places: the Filters dropdown (phones and
- * tablets) and the left sidebar (laptops and up).
+ * instantly. Rendered inside the Filters dropdown.
  */
 function FilterOptions({ filters, onChange, categories, savedCount }: FilterOptionsProps) {
   const count = activeFilterCount(filters);

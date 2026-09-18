@@ -229,8 +229,16 @@ function App() {
           <a className="brand" href="/" translate="no">
             SF Radar<span className="dot-red">.</span>
           </a>
+          {/* Phones: Group & share sits up here, level with the logo. From
+              720px the same button lives at the end of the control row. */}
           {events.length > 0 && (
-            <Dropdown label="Group & share" panelLabel="Group, share and calendar" align="right" wide>
+            <Dropdown
+              className="dropdown--share dropdown--share-top"
+              label="Group & share"
+              panelLabel="Group, share and calendar"
+              align="right"
+              wide
+            >
               <PlanActions attendingEvents={savedEvents} loggedNights={[]} startDate={null} />
             </Dropdown>
           )}
@@ -255,119 +263,113 @@ function App() {
           </p>
         )}
 
-        <div className="layout">
-          {months.length > 0 && (
-            <aside className="sidebar" aria-label="Filters">
-              <h2 className="sidebar__title">Filters</h2>
+        {months.length > 0 && (
+          <DatePicker
+            months={months}
+            month={activeMonth}
+            onMonthChange={changeMonth}
+            days={days}
+            day={activeDay}
+            onDayChange={setDay}
+            today={today}
+          >
+            <Dropdown
+              className="dropdown--filters"
+              label={filterCount > 0 ? `Filters (${filterCount})` : "Filters"}
+              panelLabel="Filters"
+              active={filterCount > 0}
+            >
               <FilterOptions
                 filters={filters}
                 onChange={setFilters}
                 categories={categoryOptions}
                 savedCount={savedCount}
               />
-            </aside>
+            </Dropdown>
+            <Dropdown
+              className="dropdown--share dropdown--share-row"
+              label="Group & share"
+              panelLabel="Group, share and calendar"
+              align="right"
+              wide
+            >
+              <PlanActions attendingEvents={savedEvents} loggedNights={[]} startDate={null} />
+            </Dropdown>
+          </DatePicker>
+        )}
+
+        <section className="results" id="events" aria-labelledby="results-title" tabIndex={-1}>
+          {!showSkeleton && months.length > 0 && (
+            <h2 id="results-title" className="results__title" aria-live="polite">
+              {resultLine}
+            </h2>
           )}
-          <div className="main">
-            {months.length > 0 && (
-              <DatePicker
-                months={months}
-                month={activeMonth}
-                onMonthChange={changeMonth}
-                days={days}
-                day={activeDay}
-                onDayChange={setDay}
-                today={today}
+
+          {showSkeleton && (
+            <ul className="list" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => (
+                <li className="ev ev--skeleton" key={i}>
+                  <span className="sk sk--num" />
+                  <span className="ev__body">
+                    <span className="sk sk--title" />
+                    <span className="sk sk--line" />
+                    <span className="sk sk--line sk--short" />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!showSkeleton && !error && months.length === 0 && (
+            <div className="empty">
+              <p className="empty__title">No upcoming events yet.</p>
+              <p className="text-muted">New events are added every few hours. Check back later.</p>
+            </div>
+          )}
+
+          {!showSkeleton && months.length > 0 && list.length === 0 && (
+            <div className="empty">
+              <p className="empty__title">
+                {filters.savedOnly ? "Nothing saved here yet." : activeDay === ANY_DAY ? "No events match." : "No events on this day."}
+              </p>
+              <p className="text-muted">
+                {filters.savedOnly ? "Tap “Save” on an event to keep it here." : "Try another day, or clear the filters."}
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setDay(ANY_DAY);
+                  setFilters(NO_FILTERS);
+                }}
               >
-                <Dropdown
-                  className="dropdown--filters"
-                  label={filterCount > 0 ? `Filters (${filterCount})` : "Filters"}
-                  panelLabel="Filters"
-                  active={filterCount > 0}
-                >
-                  <FilterOptions
-                    filters={filters}
-                    onChange={setFilters}
-                    categories={categoryOptions}
-                    savedCount={savedCount}
-                  />
-                </Dropdown>
-              </DatePicker>
-            )}
+                Show all of {monthName(activeMonth)}
+              </button>
+            </div>
+          )}
 
-            <section className="results" id="events" aria-labelledby="results-title" tabIndex={-1}>
-              {!showSkeleton && months.length > 0 && (
-                <h2 id="results-title" className="results__title" aria-live="polite">
-                  {resultLine}
-                </h2>
-              )}
+          {shown.length > 0 && (
+            <ol className="list">
+              {shown.map((event, i) => (
+                <EventCard
+                  key={event.api_id}
+                  event={event}
+                  rank={i + 1}
+                  saved={!!plan.attending[event.api_id]}
+                  onToggleSave={toggleSave}
+                />
+              ))}
+            </ol>
+          )}
 
-              {showSkeleton && (
-                <ul className="list" aria-hidden="true">
-                  {[0, 1, 2, 3].map((i) => (
-                    <li className="ev ev--skeleton" key={i}>
-                      <span className="sk sk--num" />
-                      <span className="ev__body">
-                        <span className="sk sk--title" />
-                        <span className="sk sk--line" />
-                        <span className="sk sk--line sk--short" />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {!showSkeleton && !error && months.length === 0 && (
-                <div className="empty">
-                  <p className="empty__title">No upcoming events yet.</p>
-                  <p className="text-muted">New events are added every few hours. Check back later.</p>
-                </div>
-              )}
-
-              {!showSkeleton && months.length > 0 && list.length === 0 && (
-                <div className="empty">
-                  <p className="empty__title">
-                    {filters.savedOnly ? "Nothing saved here yet." : activeDay === ANY_DAY ? "No events match." : "No events on this day."}
-                  </p>
-                  <p className="text-muted">
-                    {filters.savedOnly ? "Tap “Save” on an event to keep it here." : "Try another day, or clear the filters."}
-                  </p>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => {
-                      setDay(ANY_DAY);
-                      setFilters(NO_FILTERS);
-                    }}
-                  >
-                    Show all of {monthName(activeMonth)}
-                  </button>
-                </div>
-              )}
-
-              {shown.length > 0 && (
-                <ol className="list">
-                  {shown.map((event, i) => (
-                    <EventCard
-                      key={event.api_id}
-                      event={event}
-                      rank={i + 1}
-                      saved={!!plan.attending[event.api_id]}
-                      onToggleSave={toggleSave}
-                    />
-                  ))}
-                </ol>
-              )}
-
-              {remaining > 0 && (
-                <div className="more" ref={moreRef}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
-                    Show more ({remaining} left)
-                  </button>
-                </div>
-              )}
-            </section>
-          </div>
-        </div>
+          {remaining > 0 && (
+            <div className="more" ref={moreRef}>
+              <button type="button" className="btn btn-secondary" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
+                Show more ({remaining} left)
+              </button>
+            </div>
+          )}
+        </section>
 
         <footer className="foot">
           <p>
