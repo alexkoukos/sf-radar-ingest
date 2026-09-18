@@ -8,3 +8,5 @@ dependency-reduced-pom.xml
 HELP.md
 .claude/
 node_modules/
+CLAUDE.md
+HANDOFF.md
