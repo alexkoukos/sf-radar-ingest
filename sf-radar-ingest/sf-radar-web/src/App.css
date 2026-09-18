@@ -57,21 +57,35 @@
 /* — one row of rounded controls: Month · Day · Filters · Group & share —
    The same row, in the same order, at every window size. When it can't
    fit (phones), it stays one line and scrolls sideways, with a fade on
-   the edge as the hint; dropdowns open as bottom sheets there, so the
-   scroller never clips them. The padding keeps focus rings unclipped. */
+   the edge as the hint; dropdowns open as bottom sheets there. The fade
+   is an overlay on the wrapper, NOT a mask on the row: a mask would make
+   the row the containing block for the fixed bottom sheets and clip them
+   to the row's box. The padding keeps focus rings unclipped. */
+.controls-wrap {
+  position: relative;
+  margin: 0 0 var(--space-8);
+}
+.controls-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: calc(-1 * var(--space-1));
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--color-bg));
+}
 .controls {
   position: relative;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-2);
-  margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-1)) var(--space-8);
-  padding: var(--space-1);
+  margin: calc(-1 * var(--space-1));
+  padding: var(--space-1) var(--space-6) var(--space-1) var(--space-1);
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
-  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
 }
 .controls::-webkit-scrollbar { display: none; }
 .controls > * { flex: none; }
@@ -82,9 +96,9 @@
 @media (min-width: 720px) {
   .controls {
     overflow: visible;
-    -webkit-mask-image: none;
-    mask-image: none;
+    padding-right: var(--space-1);
   }
+  .controls-wrap::after { display: none; }
   .dropdown--share-top { display: none; }
   .dropdown--share-row { display: block; margin-left: auto; }
 }
@@ -164,7 +178,8 @@
   bottom: max(var(--space-2), env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  max-height: min(85svh, 680px);
+  max-height: 50vh;
+  max-height: 50svh; /* half the screen on phones */
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-4);
