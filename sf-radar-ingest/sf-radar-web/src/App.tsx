@@ -8,8 +8,10 @@ import { isFreeAndOpen, isNewcomerFriendly } from "./lib/scoreBreakdown";
 import { dayLongLabel, eventDayKey, monthName, monthOf, todayKey } from "./lib/dayKeys";
 import DatePicker, { ANY_DAY } from "./components/DatePicker";
 import EventCard from "./components/EventCard";
-import FilterMenu from "./components/FilterMenu";
-import { NO_FILTERS, type Filters } from "./lib/filters";
+import Dropdown from "./components/Dropdown";
+import FilterOptions from "./components/FilterOptions";
+import PlanActions from "./components/PlanActions";
+import { activeFilterCount, NO_FILTERS, type Filters } from "./lib/filters";
 import "./App.css";
 
 // How far ahead to fetch. get_dashboard_events already takes any day count;
@@ -196,6 +198,10 @@ function App() {
     return latest ? new Date(latest) : null;
   }, [events]);
 
+  // What Group & share exports: every saved event we still have data for.
+  const savedEvents = useMemo(() => events.filter((e) => plan.attending[e.api_id]), [events, plan.attending]);
+  const filterCount = activeFilterCount(filters);
+
   function toggleSave(apiId: string) {
     setPlan((prev) => {
       const next = { ...prev, attending: { ...prev.attending, [apiId]: !prev.attending[apiId] } };
@@ -223,6 +229,11 @@ function App() {
           <a className="brand" href="/" translate="no">
             SF Radar<span className="dot-red">.</span>
           </a>
+          {events.length > 0 && (
+            <Dropdown label="Group & share" panelLabel="Group, share and calendar" align="right" wide>
+              <PlanActions attendingEvents={savedEvents} loggedNights={[]} startDate={null} />
+            </Dropdown>
+          )}
         </header>
 
         <section className="intro">
@@ -244,97 +255,119 @@ function App() {
           </p>
         )}
 
-        {months.length > 0 && (
-          <DatePicker
-            months={months}
-            month={activeMonth}
-            onMonthChange={changeMonth}
-            days={days}
-            day={activeDay}
-            onDayChange={setDay}
-            today={today}
-          >
-            <FilterMenu
-              filters={filters}
-              onChange={setFilters}
-              categories={categoryOptions}
-              savedCount={savedCount}
-            />
-          </DatePicker>
-        )}
-
-        <section className="results" id="events" aria-labelledby="results-title" tabIndex={-1}>
-          {!showSkeleton && months.length > 0 && (
-            <h2 id="results-title" className="results__title" aria-live="polite">
-              {resultLine}
-            </h2>
+        <div className="layout">
+          {months.length > 0 && (
+            <aside className="sidebar" aria-label="Filters">
+              <h2 className="sidebar__title">Filters</h2>
+              <FilterOptions
+                filters={filters}
+                onChange={setFilters}
+                categories={categoryOptions}
+                savedCount={savedCount}
+              />
+            </aside>
           )}
-
-          {showSkeleton && (
-            <ul className="list" aria-hidden="true">
-              {[0, 1, 2, 3].map((i) => (
-                <li className="ev ev--skeleton" key={i}>
-                  <span className="sk sk--num" />
-                  <span className="ev__body">
-                    <span className="sk sk--title" />
-                    <span className="sk sk--line" />
-                    <span className="sk sk--line sk--short" />
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {!showSkeleton && !error && months.length === 0 && (
-            <div className="empty">
-              <p className="empty__title">No upcoming events yet.</p>
-              <p className="text-muted">New events are added every few hours. Check back later.</p>
-            </div>
-          )}
-
-          {!showSkeleton && months.length > 0 && list.length === 0 && (
-            <div className="empty">
-              <p className="empty__title">
-                {filters.savedOnly ? "Nothing saved here yet." : activeDay === ANY_DAY ? "No events match." : "No events on this day."}
-              </p>
-              <p className="text-muted">
-                {filters.savedOnly ? "Tap “Save” on an event to keep it here." : "Try another day, or clear the filters."}
-              </p>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setDay(ANY_DAY);
-                  setFilters(NO_FILTERS);
-                }}
+          <div className="main">
+            {months.length > 0 && (
+              <DatePicker
+                months={months}
+                month={activeMonth}
+                onMonthChange={changeMonth}
+                days={days}
+                day={activeDay}
+                onDayChange={setDay}
+                today={today}
               >
-                Show all of {monthName(activeMonth)}
-              </button>
-            </div>
-          )}
+                <Dropdown
+                  className="dropdown--filters"
+                  label={filterCount > 0 ? `Filters (${filterCount})` : "Filters"}
+                  panelLabel="Filters"
+                  active={filterCount > 0}
+                >
+                  <FilterOptions
+                    filters={filters}
+                    onChange={setFilters}
+                    categories={categoryOptions}
+                    savedCount={savedCount}
+                  />
+                </Dropdown>
+              </DatePicker>
+            )}
 
-          {shown.length > 0 && (
-            <ol className="list">
-              {shown.map((event, i) => (
-                <EventCard
-                  key={event.api_id}
-                  event={event}
-                  rank={i + 1}
-                  saved={!!plan.attending[event.api_id]}
-                  onToggleSave={toggleSave}
-                />
-              ))}
-            </ol>
-          )}
+            <section className="results" id="events" aria-labelledby="results-title" tabIndex={-1}>
+              {!showSkeleton && months.length > 0 && (
+                <h2 id="results-title" className="results__title" aria-live="polite">
+                  {resultLine}
+                </h2>
+              )}
 
-          {remaining > 0 && (
-            <div className="more" ref={moreRef}>
-              <button type="button" className="btn btn-secondary" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
-                Show more ({remaining} left)
-              </button>
-            </div>
-          )}
-        </section>
+              {showSkeleton && (
+                <ul className="list" aria-hidden="true">
+                  {[0, 1, 2, 3].map((i) => (
+                    <li className="ev ev--skeleton" key={i}>
+                      <span className="sk sk--num" />
+                      <span className="ev__body">
+                        <span className="sk sk--title" />
+                        <span className="sk sk--line" />
+                        <span className="sk sk--line sk--short" />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {!showSkeleton && !error && months.length === 0 && (
+                <div className="empty">
+                  <p className="empty__title">No upcoming events yet.</p>
+                  <p className="text-muted">New events are added every few hours. Check back later.</p>
+                </div>
+              )}
+
+              {!showSkeleton && months.length > 0 && list.length === 0 && (
+                <div className="empty">
+                  <p className="empty__title">
+                    {filters.savedOnly ? "Nothing saved here yet." : activeDay === ANY_DAY ? "No events match." : "No events on this day."}
+                  </p>
+                  <p className="text-muted">
+                    {filters.savedOnly ? "Tap “Save” on an event to keep it here." : "Try another day, or clear the filters."}
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setDay(ANY_DAY);
+                      setFilters(NO_FILTERS);
+                    }}
+                  >
+                    Show all of {monthName(activeMonth)}
+                  </button>
+                </div>
+              )}
+
+              {shown.length > 0 && (
+                <ol className="list">
+                  {shown.map((event, i) => (
+                    <EventCard
+                      key={event.api_id}
+                      event={event}
+                      rank={i + 1}
+                      saved={!!plan.attending[event.api_id]}
+                      onToggleSave={toggleSave}
+                    />
+                  ))}
+                </ol>
+              )}
+
+              {remaining > 0 && (
+                <div className="more" ref={moreRef}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
+                    Show more ({remaining} left)
+                  </button>
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
 
         <footer className="foot">
           <p>
