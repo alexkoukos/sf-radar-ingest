@@ -193,7 +193,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
 
       {/* ── GROUP ─────────────────────────────────────────────────────── */}
       <section className="hub-sec">
-        <h3 className="hub-sec__title">Group</h3>
+        <h2 className="hub-sec__title">Group</h2>
         <GroupHubSection
           ensurePlanPublished={ensurePlanPublished}
           startDate={startDate}
@@ -204,7 +204,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
 
       {/* ── SHARE MY PLAN ─────────────────────────────────────────────── */}
       <section className="hub-sec">
-        <h3 className="hub-sec__title">Share my plan</h3>
+        <h2 className="hub-sec__title">Share my plan</h2>
 
         <label className="hub-field hub-field--inline">
           <span>Shown as</span>
@@ -254,7 +254,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
 
       {/* ── CALENDAR ──────────────────────────────────────────────────── */}
       <section className="hub-sec">
-        <h3 className="hub-sec__title">Calendar</h3>
+        <h2 className="hub-sec__title">Calendar</h2>
 
         <div className="hub-form__actions">
           <button type="button" className="btn btn-primary" onClick={handleDownload}>

@@ -9,7 +9,7 @@
 function HowItWorks() {
   return (
     <section className="hub-sec">
-      <h3 className="hub-sec__title">How this works</h3>
+      <h2 className="hub-sec__title">How this works</h2>
       <p className="how-works__point">
         <strong>RSVP still happens on Luma.</strong> Adding an event to your plan here saves it
         to your plan and your calendar, but it does not register you. For anything that needs an

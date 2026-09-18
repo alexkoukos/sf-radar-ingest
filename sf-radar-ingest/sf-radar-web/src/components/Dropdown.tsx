@@ -17,7 +17,7 @@ interface DropdownProps {
 
 /**
  * The one dropdown pattern on the page: a rounded pill that opens a panel.
- * On phones the panel is a bottom sheet over a dimmed backdrop; from 640px
+ * On phones the panel is a bottom sheet over a dimmed backdrop; from 720px
  * it's a dropdown capped to the viewport, so it's always fully on screen.
  *
  * Closes on Escape, a tap outside, tabbing out, or the Done button - and
