@@ -64,6 +64,16 @@ function FilterMenu({ filters, onChange, categories, savedCount }: FilterMenuPro
       </button>
 
       {open && (
+        <div
+          className="filter__backdrop"
+          aria-hidden="true"
+          onClick={() => {
+            setOpen(false);
+            buttonRef.current?.focus();
+          }}
+        />
+      )}
+      {open && (
         <div className="filter__panel" id={panelId} role="group" aria-label="Filters">
           <p className="filter__heading">Show only</p>
           <label className="check">
