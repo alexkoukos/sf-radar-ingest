@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
 import type { DashboardEvent } from "./types";
 import { loadCachedEvents, saveCachedEvents } from "./lib/storage";
@@ -14,8 +14,10 @@ import "./App.css";
 // ~two months covers "this month" and "next month" in the month picker.
 // Luma rarely lists events further out than that.
 const FETCH_DAYS = 62;
-// The list shows this many at a time and only grows when asked. Nothing
-// loads by itself, so the page never shifts under someone reading it.
+// Infinite scroll: the list grows by PAGE_SIZE when the sentinel under it
+// nears the viewport. It only ever appends below what's being read, so
+// nothing above shifts. The "Show more" button stays as the tap and
+// keyboard fallback, and the path where IntersectionObserver is missing.
 const PAGE_SIZE = 10;
 
 // Explicit Pacific time, never the viewer's browser locale.
@@ -52,6 +54,7 @@ function App() {
   const [savedOnly, setSavedOnly] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [plan, setPlan] = useState<LocalPlan>({ attending: {}, logged: [] });
+  const moreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setPlan(loadLocalPlan());
@@ -141,6 +144,22 @@ function App() {
     () => dated.filter((d) => plan.attending[d.event.api_id]).length,
     [dated, plan.attending],
   );
+
+  const hasMore = list.length > visibleCount;
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const el = moreRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setVisibleCount((c) => c + PAGE_SIZE);
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, visibleCount]);
 
   // A new question gets a fresh first page.
   useEffect(() => {
@@ -294,7 +313,7 @@ function App() {
           )}
 
           {remaining > 0 && (
-            <div className="more">
+            <div className="more" ref={moreRef}>
               <button type="button" className="btn btn-secondary" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
                 Show more ({remaining} left)
               </button>
