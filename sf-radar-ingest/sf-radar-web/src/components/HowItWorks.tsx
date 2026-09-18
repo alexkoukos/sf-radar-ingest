@@ -11,7 +11,7 @@ function HowItWorks() {
     <section className="hub-sec">
       <h3 className="hub-sec__title">How this works</h3>
       <p className="how-works__point">
-        <strong>RSVP still happens on Luma.</strong> Marking an event as attending here saves it
+        <strong>RSVP still happens on Luma.</strong> Adding an event to your plan here saves it
         to your plan and your calendar, but it does not register you. For anything that needs an
         RSVP, open the Luma link and sign up there too.
       </p>

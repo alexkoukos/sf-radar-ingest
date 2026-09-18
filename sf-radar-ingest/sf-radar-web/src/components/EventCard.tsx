@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { DashboardEvent } from "../types";
 import { CATEGORY_LABELS } from "../lib/categoryLabels";
 import { formatPrice, isGated, ptStamp, rsvpLabel, venueLabel } from "../lib/eventFormat";
@@ -32,14 +33,17 @@ function formatRank(rank: number): string {
 }
 
 /**
- * Score high = visually loud, score low = visually quiet - carried here by
- * discrete rank tiers (1 / top-3 / rest) rather than a continuous fill,
- * since the Modernist card grid ranks by position, not by a score-driven
- * gradient. Paid/gated events are flagged, never hidden.
+ * One poster cell per event: hairline + heavy bar on top, a big light rank
+ * numeral with the red full stop, then the facts a newcomer decides on
+ * (when, where, who, price, how open the RSVP is) without tapping.
  *
- * "Seen" and "Hide" are personal, local-only (see lib/eventFlags.ts): a seen
- * card dims but stays; a hidden card is filtered out upstream and never
- * reaches this component.
+ * Score high = loud, score low = quiet: top-3 cells get the red bar and a
+ * full-ink numeral, the rest stay grey. Paid/gated events are flagged,
+ * never hidden.
+ *
+ * The title is the keyboard/screen-reader way into the detail sheet; a
+ * click anywhere else on the card does the same for pointer users. The card
+ * itself is not a button, so the nested controls stay valid.
  */
 function EventCard({
   event,
@@ -53,74 +57,86 @@ function EventCard({
   onSelect,
 }: EventCardProps) {
   const gated = isGated(event);
-  const score = event.score ?? 0;
+  const score = Math.round((event.score ?? 0) * 100);
   const dimAsSeen = seen && view === "default";
+  const category = CATEGORY_LABELS[event.category] ?? event.category;
 
   return (
     <li
-      className={`card ev-card ${tierClass(rank)}${dimAsSeen ? " ev-card--seen" : ""}`}
-      role="button"
-      tabIndex={0}
+      className={`card ev-card ${tierClass(rank)}${dimAsSeen ? " ev-card--seen" : ""}${attending ? " ev-card--attending" : ""}`}
       onClick={() => onSelect(event)}
-      onKeyDown={(e) => {
-        // Only when the keystroke lands on the card itself, not on a nested
-        // control (Attend / Seen / Hide), so activating those never also
-        // opens the modal.
-        if (e.target !== e.currentTarget) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect(event);
-        }
-      }}
     >
-      <span className="rank-badge">#{formatRank(rank)}</span>
-      <div className="card-kicker">
-        {CATEGORY_LABELS[event.category] ?? event.category} &middot; Score {Math.round(score * 100)}
+      <div className="ev-card__head">
+        <span className="ev-rank">
+          <span className="sr-only">Rank </span>
+          {formatRank(rank)}
+          <span className="dot-red" aria-hidden="true">.</span>
+        </span>
+        <span className="ev-score">
+          <span className="sr-only">Score </span>
+          <span className="ev-score__num">{score}</span>
+          <span className="sr-only"> out of 100</span>
+          <span className="ev-score__track" aria-hidden="true">
+            <span className="ev-score__fill" style={{ "--score": score / 100 } as CSSProperties} />
+          </span>
+        </span>
       </div>
-      <div className="card-title ev-card__title">{event.name}</div>
+
+      <div className="card-kicker">{category}</div>
+      <h3 className="card-title ev-card__title">
+        <button
+          type="button"
+          className="ev-card__open"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(event);
+          }}
+        >
+          {event.name}
+        </button>
+      </h3>
+
+      {event.starts_at && <div className="ev-card__when">{ptStamp(new Date(event.starts_at))}</div>}
       <div className="card-meta ev-card__meta">
-        {event.starts_at && <span>{ptStamp(new Date(event.starts_at))}</span>}
         <span>{venueLabel(event)}</span>
         {event.host_name && <span>{event.host_name}</span>}
       </div>
+
       <div className="ev-card__tags">
-        {dimAsSeen && <span className="tag tag-outline">Seen ✓</span>}
         <span className={event.is_free ? "tag tag-accent" : "tag tag-neutral"}>{formatPrice(event)}</span>
         <span className={gated ? "tag tag-neutral" : "tag tag-accent-2"}>{rsvpLabel(event.rsvp_type)}</span>
         {gated && <span className="tag tag-outline">Harder to get into</span>}
+        {dimAsSeen && <span className="tag tag-outline">Seen</span>}
       </div>
-      <button
-        type="button"
-        className={`btn btn-block ev-card__attend${attending ? " ev-card__attend--active" : ""}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleAttend(event.api_id);
-        }}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
-        {attending ? "Attending ✓" : "Attend"}
-      </button>
+
       <div className="ev-card__actions">
         <button
           type="button"
+          className={`btn ev-card__attend${attending ? " ev-card__attend--active" : " btn-secondary"}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleAttend(event.api_id);
+          }}
+        >
+          {attending ? "✓ In your plan" : "+ Add to plan"}
+        </button>
+        <button
+          type="button"
           className={`ev-card__act${seen ? " ev-card__act--on" : ""}`}
-          aria-pressed={seen}
           onClick={(e) => {
             e.stopPropagation();
             onToggleSeen(event.api_id);
           }}
-          onKeyDown={(e) => e.stopPropagation()}
         >
           {seen ? "Seen ✓" : "Mark seen"}
         </button>
         <button
           type="button"
-          className={`ev-card__act${view === "hidden" ? " ev-card__act--on" : ""}`}
+          className="ev-card__act"
           onClick={(e) => {
             e.stopPropagation();
             onToggleHidden(event.api_id);
           }}
-          onKeyDown={(e) => e.stopPropagation()}
         >
           {view === "hidden" ? "Unhide" : "Hide"}
         </button>

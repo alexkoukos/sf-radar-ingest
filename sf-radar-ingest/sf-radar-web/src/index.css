@@ -2,7 +2,6 @@
    component classes live in ./styles/modernist.css. This file is just the
    app shell (root sizing, viewport-safe height). */
 :root {
-  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

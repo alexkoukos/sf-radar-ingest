@@ -191,7 +191,7 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
     <details id="plan-hub" className="plan-hub">
       <summary className="plan-hub__summary">
         <span className="plan-hub__title">Group · Share · Calendar</span>
-        <span className="plan-hub__hint text-muted">trip group, share link, calendar feed, how it works</span>
+        <span className="plan-hub__hint text-muted">Plan with friends, share your nights, sync your calendar</span>
       </summary>
       <div className="plan-hub__body" aria-label="Group, share, and calendar">
 
