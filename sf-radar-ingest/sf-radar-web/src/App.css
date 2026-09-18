@@ -1,5 +1,6 @@
-/* The simple page. Built for calm: one column, one control group, big
-   readable type, no motion, nothing that moves or loads by itself.
+/* The simple page. Built for calm: one column, one row of rounded
+   controls, big readable type, no divider lines and no boxes - sections
+   are separated by space alone, so the page reads as one piece.
    Tokens and shared component classes live in styles/modernist.css. */
 
 .page {
@@ -14,7 +15,6 @@
   display: flex;
   align-items: center;
   min-height: 64px;
-  border-bottom: var(--rule-hair) solid var(--color-rule);
 }
 .brand {
   font-size: var(--text-20);
@@ -25,7 +25,7 @@
 .brand:hover { color: inherit; }
 
 .intro {
-  padding: var(--space-8) 0 var(--space-6);
+  padding: var(--space-6) 0 var(--space-6);
 }
 .intro__title {
   margin: 0 0 var(--space-3);
@@ -42,50 +42,109 @@
 .banner {
   margin: 0 0 var(--space-6);
   padding: var(--space-3) var(--space-4);
-  border-left: var(--rule-bar) solid var(--color-accent);
+  border-radius: var(--radius-md);
   background: var(--color-accent-100);
+  color: var(--color-text);
   font-size: var(--text-16);
 }
 
-/* — the one control group — */
-.picker {
-  margin: 0 0 var(--space-8);
-  padding: var(--space-4);
-  border: var(--rule-hair) solid var(--color-rule);
-  min-width: 0;
-}
-.picker__row {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: var(--space-3);
-}
-.picker__field {
+/* — one row of rounded controls: Month, Day, Filters — */
+.controls {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-8);
 }
-.picker__label {
-  font-size: var(--text-14);
-  font-weight: 600;
-}
-.picker__select {
-  min-height: 48px;
+.pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-sunken);
+  color: var(--color-text);
+  font: inherit;
   font-size: var(--text-16);
   font-weight: 500;
-  border-color: var(--color-rule);
+  white-space: nowrap;
   cursor: pointer;
+  transition: background-color var(--dur) var(--ease);
 }
-.picker__check {
+.pill:hover { background: var(--color-neutral-200); }
+/* The real <select> lies on top, invisible, so the platform picker opens. */
+.pill__native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: var(--text-16); /* 16px: no iOS zoom on focus */
+  cursor: pointer;
+  appearance: none;
+}
+.pill--select:has(.pill__native:focus-visible),
+.pill:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.pill--select .pill__native option {
+  color: initial;
+}
+/* A small chevron sitting right after the text. */
+.chev {
+  width: 7px;
+  height: 7px;
+  margin: -3px 0 0 2px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  flex: none;
+}
+.filter__button[aria-expanded="true"] .chev {
+  margin-top: 3px;
+  transform: rotate(225deg);
+}
+.filter__button--active {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+.filter__button--active:hover { background: var(--color-neutral-800); }
+
+/* — the Filters panel (a dropdown, like a shop's filter list) — */
+.filter__panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  width: min(100%, 380px);
+  max-height: min(70svh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-4) 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-4);
+}
+.filter__heading {
+  margin: var(--space-2) 0 var(--space-1);
+  font-size: var(--text-14);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.filter__heading ~ .filter__heading { margin-top: var(--space-4); }
+.check {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: 48px;
-  margin-top: var(--space-2);
+  min-height: 44px;
   font-size: var(--text-16);
   cursor: pointer;
 }
-.picker__check input {
+.check input {
   width: 22px;
   height: 22px;
   margin: 0;
@@ -93,47 +152,54 @@
   accent-color: var(--color-text);
   cursor: pointer;
 }
+.check__count {
+  margin-left: var(--space-1);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.filter__foot {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3) 0 var(--space-4);
+  background: var(--color-surface);
+}
 
 /* — results — */
 .results { scroll-margin-top: var(--space-4); }
 .results:focus { outline: none; }
-.results__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
 .results__title {
-  margin: 0;
+  margin: 0 0 var(--space-6);
   font-size: var(--text-20);
   line-height: var(--leading-snug);
   letter-spacing: -0.01em;
 }
-.results__saved { flex: none; }
 
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
 }
 
-/* — one event — */
+/* — one event: no box, no line; space does the separating — */
 .ev {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-columns: 36px minmax(0, 1fr);
   gap: var(--space-3);
-  padding: var(--space-6) 0;
-  border-top: var(--rule-hair) solid var(--color-divider);
 }
-.ev:first-child { border-top-color: var(--color-rule); }
 .ev__rank {
   margin: 0;
-  font-size: var(--text-24);
-  font-weight: 400;
-  line-height: 1.2;
+  font-size: var(--text-20);
+  font-weight: 500;
+  line-height: 1.25;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
 }
 .ev__body { min-width: 0; }
 .ev__title {
@@ -159,17 +225,23 @@
   gap: var(--space-2);
   margin: 0 0 var(--space-4);
 }
-.ev__tags .tag { font-size: var(--text-14); padding: 2px var(--space-2); }
 .ev__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-4);
 }
-.ev__save { min-width: 120px; min-height: 48px; font-size: var(--text-16); }
-.ev__luma { min-height: 48px; font-size: var(--text-16); }
+.ev__save { min-width: 112px; min-height: 44px; font-size: var(--text-16); }
+/* Saved: the fill gives way to a red outline and red label. */
+.ev__save--on {
+  background: transparent;
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
+}
+.ev__save--on:hover { background: var(--color-accent-100); }
+.ev__luma { min-height: 44px; font-size: var(--text-16); }
 
-/* Saved: a quiet red marker on the left, plus the button's own label. */
+/* Saved: the rank turns red, plus the button's own label. */
 .ev--saved .ev__rank { color: var(--color-accent); }
 /* Invite/members only: still listed, visibly quieter. */
 .ev--gated { opacity: 0.6; }
@@ -178,43 +250,34 @@
 .more {
   display: flex;
   justify-content: center;
-  padding: var(--space-6) 0 0;
-  border-top: var(--rule-hair) solid var(--color-divider);
+  padding: var(--space-12) 0 0;
 }
-.more .btn { min-height: 48px; min-width: 220px; font-size: var(--text-16); }
+.more .btn { min-height: 44px; min-width: 200px; font-size: var(--text-16); }
 
 .empty {
-  padding: var(--space-8) 0;
-  border-top: var(--rule-hair) solid var(--color-rule);
+  padding: var(--space-4) 0 var(--space-8);
 }
 .empty__title {
   margin: 0 0 var(--space-2);
   font-size: var(--text-20);
   font-weight: 700;
 }
-.empty .btn { margin-top: var(--space-3); min-height: 48px; font-size: var(--text-16); }
+.empty .btn { margin-top: var(--space-3); min-height: 44px; font-size: var(--text-16); }
 
 /* Skeleton rows shaped like the real ones. Static, no pulsing. */
 .ev--skeleton .ev__body { display: flex; flex-direction: column; gap: var(--space-2); }
-.sk { display: block; height: 16px; background: var(--color-sunken); }
-.sk--num { width: 24px; height: 28px; }
+.sk { display: block; height: 16px; border-radius: var(--radius-sm); background: var(--color-sunken); }
+.sk--num { width: 24px; height: 24px; }
 .sk--title { width: 80%; height: 24px; }
 .sk--line { width: 55%; }
 .sk--short { width: 35%; }
 
 .foot {
-  margin-top: var(--space-12);
-  padding-top: var(--space-6);
-  border-top: var(--rule-hair) solid var(--color-rule);
+  margin-top: var(--space-16);
   font-size: var(--text-14);
   color: var(--color-text-secondary);
 }
 .foot p { margin: 0 0 var(--space-2); }
-
-@media (max-width: 400px) {
-  .picker__row { grid-template-columns: minmax(0, 1fr); }
-  .results__head { flex-wrap: wrap; }
-}
 
 /* — layout for the /plan and /group pages (not the main page) — */
 .dashboard {

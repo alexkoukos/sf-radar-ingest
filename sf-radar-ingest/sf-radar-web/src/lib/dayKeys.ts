@@ -45,6 +45,11 @@ export function monthLabel(monthKey: string): string {
   return monthLabelFormatter.format(keyToNoonUtc(monthKey));
 }
 
+/** "September" in the current year, "January 2027" otherwise - no year noise when it's obvious. */
+export function monthPickerLabel(monthKey: string, today: string): string {
+  return monthKey.slice(0, 4) === today.slice(0, 4) ? monthName(monthKey) : monthLabel(monthKey);
+}
+
 /** "2026-09" -> "September" */
 export function monthName(monthKey: string): string {
   return monthNameFormatter.format(keyToNoonUtc(monthKey));

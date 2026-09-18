@@ -4,10 +4,12 @@ import type { DashboardEvent } from "./types";
 import { loadCachedEvents, saveCachedEvents } from "./lib/storage";
 import { loadLocalPlan, saveLocalPlan, type LocalPlan } from "./lib/localPlan";
 import { laZoneAbbrev } from "./lib/eventFormat";
-import { isFreeAndOpen } from "./lib/scoreBreakdown";
+import { isFreeAndOpen, isNewcomerFriendly } from "./lib/scoreBreakdown";
 import { dayLongLabel, eventDayKey, monthName, monthOf, todayKey } from "./lib/dayKeys";
 import DatePicker, { ANY_DAY } from "./components/DatePicker";
 import EventCard from "./components/EventCard";
+import FilterMenu from "./components/FilterMenu";
+import { NO_FILTERS, type Filters } from "./lib/filters";
 import "./App.css";
 
 // How far ahead to fetch. get_dashboard_events already takes any day count;
@@ -50,8 +52,7 @@ function App() {
 
   const [month, setMonth] = useState<string>(() => monthOf(todayKey()));
   const [day, setDay] = useState<string>(ANY_DAY);
-  const [freeOnly, setFreeOnly] = useState(false);
-  const [savedOnly, setSavedOnly] = useState(false);
+  const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [plan, setPlan] = useState<LocalPlan>({ attending: {}, logged: [] });
   const moreRef = useRef<HTMLDivElement | null>(null);
@@ -117,27 +118,47 @@ function App() {
   // empty), fall back to the first month that does.
   const activeMonth = months.includes(month) ? month : (months[0] ?? month);
 
+  // Every non-date filter in one place, so the day counts, the category
+  // counts and the list can never disagree.
+  const passes = useMemo(() => {
+    return (e: DashboardEvent, ignoreCategories = false) =>
+      (!filters.freeOnly || isFreeAndOpen(e)) &&
+      (!filters.openOnly || isNewcomerFriendly(e)) &&
+      (!filters.savedOnly || !!plan.attending[e.api_id]) &&
+      (ignoreCategories || filters.categories.length === 0 || filters.categories.includes(e.category));
+  }, [filters, plan.attending]);
+
+  const monthEvents = useMemo(() => dated.filter((d) => monthOf(d.day) === activeMonth), [dated, activeMonth]);
+
   const days = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const d of dated) {
-      if (monthOf(d.day) !== activeMonth) continue;
-      if (freeOnly && !isFreeAndOpen(d.event)) continue;
+    for (const d of monthEvents) {
+      if (!passes(d.event)) continue;
       counts.set(d.day, (counts.get(d.day) ?? 0) + 1);
     }
     return Array.from(counts, ([key, count]) => ({ key, count })).sort((a, b) => a.key.localeCompare(b.key));
-  }, [dated, activeMonth, freeOnly]);
+  }, [monthEvents, passes]);
+
+  // Category options: what's in this month, counted with the other filters
+  // applied (but not the category choice itself, so options don't vanish).
+  const categoryOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const d of monthEvents) {
+      if (!passes(d.event, true)) continue;
+      counts.set(d.event.category, (counts.get(d.event.category) ?? 0) + 1);
+    }
+    return Array.from(counts, ([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
+  }, [monthEvents, passes]);
 
   const activeDay = day !== ANY_DAY && days.some((d) => d.key === day) ? day : ANY_DAY;
 
   const list = useMemo(
     () =>
-      dated
-        .filter((d) => monthOf(d.day) === activeMonth)
+      monthEvents
         .filter((d) => activeDay === ANY_DAY || d.day === activeDay)
-        .filter((d) => !freeOnly || isFreeAndOpen(d.event))
-        .filter((d) => !savedOnly || plan.attending[d.event.api_id])
+        .filter((d) => passes(d.event))
         .map((d) => d.event),
-    [dated, activeMonth, activeDay, freeOnly, savedOnly, plan.attending],
+    [monthEvents, activeDay, passes],
   );
 
   const savedCount = useMemo(
@@ -164,7 +185,7 @@ function App() {
   // A new question gets a fresh first page.
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [activeMonth, activeDay, freeOnly, savedOnly]);
+  }, [activeMonth, activeDay, filters]);
 
   const lastUpdated = useMemo(() => {
     let latest = 0;
@@ -192,7 +213,7 @@ function App() {
   const shown = list.slice(0, visibleCount);
   const remaining = list.length - shown.length;
   const where = activeDay === ANY_DAY ? `in ${monthName(activeMonth)}` : `on ${dayLongLabel(activeDay)}`;
-  const resultLine = `${list.length} ${savedOnly ? "saved " : ""}${list.length === 1 ? "event" : "events"} ${where}`;
+  const resultLine = `${list.length} ${filters.savedOnly ? "saved " : ""}${list.length === 1 ? "event" : "events"} ${where}`;
 
   return (
     <>
@@ -232,26 +253,21 @@ function App() {
             day={activeDay}
             onDayChange={setDay}
             today={today}
-            freeOnly={freeOnly}
-            onFreeOnlyChange={setFreeOnly}
-          />
+          >
+            <FilterMenu
+              filters={filters}
+              onChange={setFilters}
+              categories={categoryOptions}
+              savedCount={savedCount}
+            />
+          </DatePicker>
         )}
 
         <section className="results" id="events" aria-labelledby="results-title" tabIndex={-1}>
           {!showSkeleton && months.length > 0 && (
-            <div className="results__head">
-              <h2 id="results-title" className="results__title" aria-live="polite">
-                {resultLine}
-              </h2>
-              <button
-                type="button"
-                className={`btn ${savedOnly ? "btn-primary" : "btn-secondary"} results__saved`}
-                aria-pressed={savedOnly}
-                onClick={() => setSavedOnly((v) => !v)}
-              >
-                {savedOnly ? "Show all" : `Saved (${savedCount})`}
-              </button>
-            </div>
+            <h2 id="results-title" className="results__title" aria-live="polite">
+              {resultLine}
+            </h2>
           )}
 
           {showSkeleton && (
@@ -279,18 +295,17 @@ function App() {
           {!showSkeleton && months.length > 0 && list.length === 0 && (
             <div className="empty">
               <p className="empty__title">
-                {savedOnly ? "Nothing saved here yet." : activeDay === ANY_DAY ? "No events match." : "No events on this day."}
+                {filters.savedOnly ? "Nothing saved here yet." : activeDay === ANY_DAY ? "No events match." : "No events on this day."}
               </p>
               <p className="text-muted">
-                {savedOnly ? "Tap “Save” on an event to keep it here." : "Try another day, or turn off the free-only filter."}
+                {filters.savedOnly ? "Tap “Save” on an event to keep it here." : "Try another day, or clear the filters."}
               </p>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={() => {
                   setDay(ANY_DAY);
-                  setFreeOnly(false);
-                  setSavedOnly(false);
+                  setFilters(NO_FILTERS);
                 }}
               >
                 Show all of {monthName(activeMonth)}

@@ -41,7 +41,7 @@ function EventCard({ event, rank, saved, onToggleSave }: EventCardProps) {
         <div className="ev__actions">
           <button
             type="button"
-            className={`btn ${saved ? "btn-primary" : "btn-secondary"} ev__save`}
+            className={`btn ev__save ${saved ? "ev__save--on" : "btn-secondary"}`}
             onClick={() => onToggleSave(event.api_id)}
           >
             {saved ? "✓ Saved" : "Save"}
