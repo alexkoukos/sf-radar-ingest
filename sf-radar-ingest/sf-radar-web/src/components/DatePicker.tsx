@@ -34,6 +34,7 @@ function dayText(day: string, days: DatePickerProps["days"], today: string): str
  */
 function DatePicker({ months, month, onMonthChange, days, day, onDayChange, today, children }: DatePickerProps) {
   return (
+    <div className="controls-wrap">
     <div className="controls" role="group" aria-label="Choose a date and filters">
       <label className="pill pill--select">
         <span className="sr-only">Month</span>
@@ -62,6 +63,7 @@ function DatePicker({ months, month, onMonthChange, days, day, onDayChange, toda
         <span className="chev" aria-hidden="true" />
       </label>
       {children}
+    </div>
     </div>
   );
 }
