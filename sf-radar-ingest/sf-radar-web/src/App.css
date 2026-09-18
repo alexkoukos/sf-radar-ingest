@@ -5,7 +5,7 @@
 
 .page {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 max(var(--space-4), env(safe-area-inset-right)) var(--space-12) max(var(--space-4), env(safe-area-inset-left));
   min-width: 0;
@@ -14,9 +14,14 @@
 .top {
   display: flex;
   align-items: center;
-  min-height: 64px;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 72px;
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: var(--text-20);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -105,58 +110,82 @@
   transform: rotate(45deg);
   flex: none;
 }
-.filter__button[aria-expanded="true"] .chev {
+.dropdown { position: relative; }
+.dropdown__button[aria-expanded="true"] .chev {
   margin-top: 3px;
   transform: rotate(225deg);
 }
-.filter__button--active {
+.dropdown__button--active {
   background: var(--color-text);
   color: var(--color-bg);
 }
-.filter__button--active:hover { background: var(--color-neutral-800); }
+.dropdown__button--active:hover { background: var(--color-neutral-800); }
 
-/* — the Filters panel (a dropdown, like a shop's filter list) —
+/* — dropdown panel —
    Always fully on screen: a bottom sheet on phones, a dropdown capped to
-   the viewport on wider screens. */
-.filter__backdrop {
+   the viewport from 640px. */
+.dropdown__backdrop {
   position: fixed;
   inset: 0;
-  z-index: 19;
+  z-index: 29;
   background: rgb(0 0 0 / 0.35);
 }
-.filter__panel {
+.dropdown__panel {
   position: fixed;
-  z-index: 20;
+  z-index: 30;
   left: var(--space-2);
   right: var(--space-2);
   bottom: max(var(--space-2), env(safe-area-inset-bottom));
-  max-height: min(80svh, 640px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--space-4) var(--space-4) 0;
+  display: flex;
+  flex-direction: column;
+  max-height: min(85svh, 680px);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-4);
+  overscroll-behavior: contain;
+}
+.dropdown__panel:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.dropdown__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-4) 0;
+}
+.dropdown__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-4) var(--space-4);
 }
 @media (min-width: 640px) {
-  .filter__backdrop { display: none; }
-  .filter__panel {
+  .dropdown__backdrop { display: none; }
+  .dropdown__panel {
     position: absolute;
     top: calc(100% + var(--space-2));
+    bottom: auto;
     left: 0;
     right: auto;
-    bottom: auto;
-    width: 380px;
-    max-height: min(560px, calc(100svh - 200px));
+    width: 360px;
+    max-height: min(600px, calc(100svh - 180px));
   }
+  .dropdown--right .dropdown__panel { left: auto; right: 0; }
+  .dropdown__panel--wide { width: 440px; }
 }
-.filter__heading {
-  margin: var(--space-2) 0 var(--space-1);
+
+/* — filter checkboxes (dropdown and sidebar share these) — */
+.filter-options__group {
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.filter-options__heading {
+  padding: 0;
+  margin: 0 0 var(--space-1);
   font-size: var(--text-14);
   font-weight: 600;
   color: var(--color-text-secondary);
 }
-.filter__heading ~ .filter__heading { margin-top: var(--space-4); }
 .check {
   display: flex;
   align-items: center;
@@ -178,16 +207,38 @@
   color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
 }
-.filter__foot {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-  padding: var(--space-3) 0 var(--space-4);
-  background: var(--color-surface);
+.filter-options__clear { padding-left: 0; padding-right: 0; }
+
+/* — laptop layout: filters live in a left sidebar, always open — */
+.layout { min-width: 0; }
+.main { min-width: 0; }
+.sidebar { display: none; }
+@media (min-width: 1024px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    gap: var(--space-12);
+    align-items: start;
+  }
+  .sidebar {
+    display: block;
+    position: sticky;
+    top: var(--space-6);
+    max-height: calc(100svh - var(--space-12));
+    overflow-y: auto;
+    padding-right: var(--space-2);
+  }
+  .sidebar__title {
+    margin: 0 0 var(--space-4);
+    font-size: var(--text-20);
+  }
+  /* The sidebar replaces the Filters pill here. */
+  .dropdown--filters { display: none; }
 }
+
+/* the Group & share panel's contents, inside a dropdown */
+.dropdown .plan-hub { margin: 0; border: 0; }
+.dropdown .plan-hub__body { padding: 0; border: 0; }
 
 /* — results — */
 .results { scroll-margin-top: var(--space-4); }
@@ -199,7 +250,8 @@
   letter-spacing: -0.01em;
 }
 
-/* One column on phones; a 2-up then 3-up grid when there's room. */
+/* One column on phones; a 2-up then 3-up grid when the results column
+   has room (container queries, so the sidebar is accounted for). */
 .list {
   list-style: none;
   margin: 0;
@@ -208,10 +260,11 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-12) var(--space-8);
 }
-@media (min-width: 720px) {
+.results { container-type: inline-size; }
+@container (min-width: 600px) {
   .list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (min-width: 1040px) {
+@container (min-width: 1000px) {
   .list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 /* Keep each event's buttons on one baseline across a grid row. */
@@ -880,7 +933,8 @@
 /* — timezone format: nested secondary setting — */
 .tz-toggle-wrap {
   margin-top: var(--space-3);
-  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-sunken);
 }
 .tz-toggle-wrap > summary {
   padding: var(--space-2) var(--space-3);
