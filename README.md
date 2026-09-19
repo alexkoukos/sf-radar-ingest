@@ -1,6 +1,8 @@
 # SF Radar
 
-A live dashboard that ranks real San Francisco tech/startup/investor events for someone spending a short, fixed window of nights in the city with no existing local network. It answers one question: **out of everything happening tonight, what's actually worth walking into?**
+A live, ranked list of real San Francisco tech, startup and investor events, for someone spending a short, fixed stay in the city with no existing local network. Pick a day and it answers one question: **out of everything happening that day, what's actually worth walking into?**
+
+Live at **https://sf-radar-ingest.vercel.app**.
 
 ## The problem this solves
 
@@ -111,7 +113,7 @@ This is what lets a free, open-RSVP community meetup outrank a topically "hotter
 
 ### Why there's no "Host" score
 
-The breakdown bars in the app show Keyword / Venue / Access. There's no fourth "Host" bar, and that's intentional, not a missing feature. A host-reputation scorer was cut for time, so every host defaults to equal weight rather than being ranked on an incomplete signal. Showing a host bar backed by no real data would be worse than not showing one at all.
+The score has three parts: Keyword, Venue and Access. There's no fourth "Host" part, and that's intentional, not a missing feature. A host reputation scorer was cut for time, so every host defaults to equal weight rather than being ranked on an incomplete signal.
 
 ## Ingestion resilience
 
@@ -165,51 +167,60 @@ Sort is score first, start time as the tiebreaker, nothing else. No keyword filt
 
 ## The frontend
 
-### The 14-night strip
+One calm page, built to be simple enough to use without thinking about the interface. One column on a phone, a grid on a laptop, no animation, nothing that moves on its own, and plain words everywhere.
 
-One bar per night in the window. Bar height and color are a continuous function of that night's best event score (`height = score × 100%`, with color mixed between the accent color and neutral gray, weighted by score), not a discrete bucket. A ✦ mark appears on any night with 2+ events scoring ≥0.7 ("strong picks"), which also drives the "N strong picks tonight, you can only make one" banner when that night is selected. A night you've marked **Attending** renders as a solid full-height bar in a different color entirely, overriding the score gradient, since it's yours regardless of how it scored. Empty nights are drawn with a dashed outline and are unclickable. Click a night to filter the list below to just that night; click again to clear it.
+### Picking a day
+
+A single row of rounded buttons sits under the headline, in the same place and order at every screen size:
+
+- **Month** (defaults to this month) and **Day** ("Any day", or one day). Both are native dropdowns underneath, so every phone opens its own familiar picker. Only days that actually have events are offered, each with its count, for example "Thu 24 · 5 events", so every choice leads somewhere.
+- **Filters** opens a list of checkboxes, the way a shop's filter panel works. Changes apply instantly:
+  - Free events anyone can join (free **and** open RSVP)
+  - Open RSVP, no approval needed (open RSVP at any price)
+  - My saved events
+  - Type of event (Investor, Demo Day, Founder Social, Hackathon, Networking, Other), each with a count
+- **Group & share** holds the trip group, share link and calendar tools (see [Trip groups](#trip-groups)).
+
+On a laptop or tablet all four buttons share one line. On a phone the first three share one line and Group & share sits at the top right, level with the logo. On very narrow phones the row stays on one line and scrolls sideways. Dropdowns open as a panel under the button on bigger screens and as a sheet from the bottom (half the screen tall) on phones, so they are always fully on screen.
+
+The dates are grouped by the event's Pacific calendar day (formatted with an explicit `America/Los_Angeles` timezone), and the list keeps the SQL order. Picking a day or a filter only narrows the already ranked list; it never re-sorts it.
 
 ### The ranked list
 
-Below the strip: either the whole window ranked #01, #02, #03 and on, or a single night when one is selected. The all-window list loads about 20 events at a time, with more added as you scroll near the bottom or tap "Load more". Rank numbers stay continuous across batches, and changing a filter or the arrival date starts again from the first batch. The single-night list is short enough that it always shows in full.
+A line like "7 events on Friday, September 18" says exactly what is on screen. Below it, one event per row on a phone, two per row on a 13 inch laptop, three on wider screens. Each event shows:
 
-### Sort: Balanced / Investor signal first
+- its rank, title, and day and time with a visible "PDT" label
+- neighborhood and host
+- two tags: price ("Free" in red, or the price) and RSVP openness ("Open RSVP", "Application", "Waitlist"...)
+- two actions: **Save** (turns into a red outlined "✓ Saved") and **Open on Luma ↗**
 
-Two pills. "Balanced" clears all filters (plain score order). "Investor signal first" is a relabeled shortcut for the Investor Meetup category filter, visually a sort but really just filtering to a category that's already sorted by score within itself, so nothing is ever re-sorted client-side.
+Invite only and members only events are dimmed, never hidden. The list loads 10 events at a time and adds more as you scroll near the bottom; a "Show more" button does the same for tapping or keyboard use.
 
-### View: My Plan / Tonight only
+### Saved events
 
-Two toggles, mutually exclusive: clicking one turns the other off if it was on, and neither active is also a valid, default state. "Tonight only" jumps to the current window's first night. "My Plan" filters the ranked list down to events you've marked Attending. Logged nights (below) aren't ranked events, so they always show regardless of this toggle.
+Save lives in `localStorage` only: no accounts, no login, nothing sent to Supabase. It survives a reload but stays in that one browser.
 
-### Filter chips: Newcomer friendly / Free & open only / category
+### Offline / stale data
 
-"Free & open only" means free **and** open RSVP. "Newcomer friendly" is broader: open RSVP alone, regardless of price. Category chips are generated from whatever categories are actually present in the current window, so there's never a chip pointing at zero results. On a phone, the Sort and Filter Chips rows scroll horizontally in a single line instead of wrapping across multiple short rows, the same interaction as Luma's own mobile chip rows, so every option stays one swipe away instead of stacking into a wall of buttons.
+Cached events load instantly from `localStorage` on open. If a live fetch fails and a cache exists, the last good data stays on screen with a "You're offline" banner showing when it was saved, instead of a blank page. A hard error message only shows when there is no cache at all.
 
-### Event cards
+### Look and accessibility
 
-Rank badge, category and numeric score (0 to 100), title, time (always rendered in explicit `America/Los_Angeles` with a visible "PDT" label, never the browser's local timezone), venue, host, then three tags: price/free, RSVP openness, and a "Harder to get into" flag for invite-only/members-only events. Gated events are flagged, never hidden. Visual loudness maps to *rank*, not raw score directly: the #1 card gets a solid accent fill and, on wider screens, double width; #2 and #3 get an accent border; everything else is deliberately muted (`opacity: 0.78`). Tapping a card opens the detail modal, and the **Attend** button toggles the My Plan state directly from the card without opening it.
+Design tokens live in `sf-radar-web/src/styles/modernist.css`: IBM Plex Sans, warm neutral greys on an off white page, a matte black (`#121212`) dark mode that follows the phone's setting, and a single soft red for emphasis. Every text colour meets WCAG AA contrast in both themes.
 
-### Event detail modal
+Checked with axe-core (WCAG 2.2 AA plus best practice) at widths from 320px to 1920px, in light and dark, with each dropdown open: 0 violations. Keyboard use works throughout: the first Tab lands on "Skip to events", dropdowns move focus inside when opened and hand it back to their button on Escape, and every tap target is at least 44px.
 
-Same data as the card, more room, plus the score breakdown: three horizontal bars (Keyword / Venue / Access) showing exactly the sub-scores described in [Scoring](#scoring), and an "Open on Luma ↗" link when available.
+### Search and sharing
 
-### Log a Night
-
-The "+ Log a night" button in the header lets you record something that isn't a ranked or scraped event at all, like dinner with a friend or anything off-platform. Pick a night, give it a title and an optional note. It renders back as a dashed-border card, visually distinct from ranked cards (no score, not clickable), and counts toward the "N nights planned" total and the strip's booked-night fill exactly like an Attending toggle does. On a phone it confirms the save with a short toast, since the new card can land outside the current view.
-
-### My Plan storage
-
-Both Attending toggles and logged nights live in a single object in `localStorage` only, with no accounts, no login, and nothing ever sent to Supabase. It survives a page reload, so a demo doesn't lose your picks, but it never leaves the browser.
-
-### Offline / stale-data handling
-
-Cached events load instantly from `localStorage` on open. If a live fetch fails and a cache exists, the last good data stays on screen with a timestamped "stale" banner instead of a blank page or a crash. A hard error banner only shows if there's no cache at all, a true first-load failure with nothing to fall back to.
+- `sf-radar-web/public/robots.txt` and `sitemap.xml` list the one public page, `/`. Shared plans, trip groups and calendar feeds are private per person links, so they are disallowed in `robots.txt`, left out of the sitemap, and also sent with `X-Robots-Tag: noindex` from `vercel.json`.
+- `index.html` carries the title, description, canonical URL, Open Graph and Twitter card tags, `WebSite` structured data (JSON-LD), and a short no JavaScript fallback.
+- The link preview image is `sf-radar-web/public/og-image.png` (1200 × 630).
 
 ## Trip groups
 
-An optional layer for people coordinating a trip together. From the **Group · Share · Calendar** panel at the top of the page (collapsed by default) you can **create a group** (it adopts your current plan as member #1) or **join one** with an invite link. A group has an unguessable link plus a passphrase. The link alone shows nothing, and the passphrase gate is enforced server-side by the Vercel functions in `api/group/`, with the group tables unreachable through the anon key (RLS enabled, zero policies). No accounts. The same panel also carries a short "How this works" summary: RSVP happens on Luma, your plan is tied to this one browser, and private windows don't keep anything.
+An optional layer for people coordinating a trip together. From the **Group & share** button you can **create a group** (it adopts your current plan as member #1) or **join one** with an invite link. A group has an unguessable link plus a passphrase. The link alone shows nothing, and the passphrase gate is enforced server-side by the Vercel functions in `api/group/`, with the group tables unreachable through the anon key (RLS enabled, zero policies). No accounts. The same panel also carries a short "How this works" summary: RSVP happens on Luma, your plan is tied to this one browser, and private windows don't keep anything.
 
-Any member can **rename the group** or **change the passphrase** later, under *Group settings* in that panel. Changing the passphrase requires the current one and doesn't sign existing members out, and only new joiners need the new value. Member colors stay auto-assigned by join order from the palette.
+Any member can **rename the group** or **change the passphrase** later, under *Group settings* in that same dropdown. Changing the passphrase requires the current one and doesn't sign existing members out, and only new joiners need the new value. Member colors stay auto-assigned by join order from the palette.
 
 The group calendar at `/group/<slug>` overlays every member's plan night by night, in per-member colors auto-assigned from a CVD-safe palette. An event two or more members are attending renders **once** with stacked member indicators, not one row per person. Members can add their own custom events and 1:1 meetings. A meeting defaults to **busy** visibility, which shows the rest of the group only an anonymous "Busy" block with no title and no name, and that redaction is done in SQL, before the data leaves Postgres.
 

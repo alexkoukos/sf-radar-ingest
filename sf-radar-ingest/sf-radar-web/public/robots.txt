@@ -1,0 +1,12 @@
+# SF Radar - https://sf-radar-ingest.vercel.app
+# The public page is the event list at /. Shared plans, trip groups and
+# calendar feeds are private per-person links: never crawl or index them
+# (they also send X-Robots-Tag: noindex, see vercel.json).
+User-agent: *
+Allow: /
+Disallow: /plan/
+Disallow: /group/
+Disallow: /feed/
+Disallow: /api/
+
+Sitemap: https://sf-radar-ingest.vercel.app/sitemap.xml
