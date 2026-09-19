@@ -1,32 +1,74 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <title>SF Radar: Tech &amp; startup events in San Francisco, ranked</title>
+    <meta name="description" content="Every day's tech, startup and investor events in San Francisco, ranked best first. Free events anyone can join rank higher. Pick a day, save what you like." />
+    <link rel="canonical" href="https://sf-radar-ingest.vercel.app/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Alex Koukos" />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#FAFAF9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <title>SF Radar — Ranked SF tech &amp; startup events</title>
-    <meta name="description" content="A ranked list of San Francisco tech, startup, and investor events by day, sourced from Luma." />
 
+    <!-- Open Graph (link previews in iMessage, Slack, WhatsApp, LinkedIn) -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="SF Radar — Ranked SF tech & startup events" />
-    <meta property="og:description" content="A ranked list of San Francisco tech, startup, and investor events by day, sourced from Luma." />
-    <meta property="og:image" content="https://sf-radar-ingest.vercel.app/og-image.png" />
+    <meta property="og:site_name" content="SF Radar" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://sf-radar-ingest.vercel.app/" />
+    <meta property="og:title" content="SF Radar: Tech & startup events in San Francisco, ranked" />
+    <meta property="og:description" content="Every day's tech, startup and investor events in San Francisco, ranked best first. Free events anyone can join rank higher." />
+    <meta property="og:image" content="https://sf-radar-ingest.vercel.app/og-image.png?v=2" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="SF Radar. Tech events in San Francisco, ranked best first." />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="SF Radar — Ranked SF tech & startup events" />
-    <meta name="twitter:description" content="A ranked list of San Francisco tech, startup, and investor events by day, sourced from Luma." />
-    <meta name="twitter:image" content="https://sf-radar-ingest.vercel.app/og-image.png" />
+    <meta name="twitter:title" content="SF Radar: Tech & startup events in San Francisco, ranked" />
+    <meta name="twitter:description" content="Every day's tech, startup and investor events in San Francisco, ranked best first. Free events anyone can join rank higher." />
+    <meta name="twitter:image" content="https://sf-radar-ingest.vercel.app/og-image.png?v=2" />
+    <meta name="twitter:image:alt" content="SF Radar. Tech events in San Francisco, ranked best first." />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "SF Radar",
+        "url": "https://sf-radar-ingest.vercel.app/",
+        "description": "Tech, startup and investor events in San Francisco, ranked best first. Free events anyone can join rank higher.",
+        "inLanguage": "en-US",
+        "about": { "@type": "City", "name": "San Francisco" },
+        "author": {
+          "@type": "Person",
+          "name": "Alex Koukos",
+          "url": "https://www.linkedin.com/in/alexandros-koukos-952a42344"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="max-width: 40em; margin: 0 auto; padding: 24px 16px; font-family: system-ui, sans-serif; line-height: 1.5">
+        <h1>SF Radar: tech events in San Francisco, ranked</h1>
+        <p>
+          Every day's tech, startup and investor events in San Francisco, ranked best first.
+          Free events anyone can join rank higher. Events come from Luma, and all times are in Pacific time.
+        </p>
+        <p>This page needs JavaScript to load the live event list. Turn it on and reload.</p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

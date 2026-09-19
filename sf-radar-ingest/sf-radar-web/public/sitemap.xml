@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Only public, indexable route. /plan/*, /group/*, /feed/* and /api/*
+     are private per-person links and are deliberately left out. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://sf-radar-ingest.vercel.app/</loc>
+    <lastmod>2026-09-19</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

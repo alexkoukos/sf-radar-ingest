@@ -14,6 +14,14 @@ import GroupCalendarPage from './components/GroupCalendarPage.tsx'
 const planMatch = window.location.pathname.match(/^\/plan\/([A-Za-z0-9_-]+)\/?$/)
 const groupMatch = window.location.pathname.match(/^\/group\/([a-f0-9]{32})\/?$/)
 
+// index.html is written for the public list at "/". The private share and
+// group pages reuse it, so they must not claim that page's canonical URL
+// or ask to be indexed (vercel.json also sends X-Robots-Tag: noindex).
+if (planMatch || groupMatch) {
+  document.querySelector('link[rel="canonical"]')?.remove()
+  document.querySelector('meta[name="robots"]')?.setAttribute('content', 'noindex, nofollow')
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {planMatch ? (

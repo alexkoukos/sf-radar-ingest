@@ -224,7 +224,7 @@ function App() {
   return (
     <>
       <a className="skip-link" href="#events">Skip to events</a>
-      <main className="page">
+      <div className="page">
         <header className="top">
           <a className="brand" href="/" translate="no">
             SF Radar<span className="dot-red">.</span>
@@ -243,6 +243,8 @@ function App() {
             </Dropdown>
           )}
         </header>
+
+        <main id="main">
 
         <section className="intro">
           <h1 className="intro__title">
@@ -371,6 +373,8 @@ function App() {
           )}
         </section>
 
+        </main>
+
         <footer className="foot">
           <p>
             Events from Luma. All times in Pacific time.
@@ -384,7 +388,7 @@ function App() {
             Built by <a href="https://www.linkedin.com/in/alexandros-koukos-952a42344" target="_blank" rel="noreferrer">Alex Koukos</a> for the HH community.
           </p>
         </footer>
-      </main>
+      </div>
     </>
   );
 }

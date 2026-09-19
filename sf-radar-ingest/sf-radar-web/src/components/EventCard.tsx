@@ -29,7 +29,11 @@ function EventCard({ event, rank, saved, onToggleSave }: EventCardProps) {
           <span className="sr-only">Number {rank}: </span>
           {event.name}
         </h3>
-        {event.starts_at && <p className="ev__when">{ptStamp(new Date(event.starts_at))}</p>}
+        {event.starts_at && (
+          <p className="ev__when">
+            <time dateTime={event.starts_at}>{ptStamp(new Date(event.starts_at))}</time>
+          </p>
+        )}
         <p className="ev__where">
           {venueLabel(event)}
           {event.host_name && <> · {event.host_name}</>}
