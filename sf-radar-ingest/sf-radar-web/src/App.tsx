@@ -11,6 +11,7 @@ import EventCard from "./components/EventCard";
 import Dropdown from "./components/Dropdown";
 import FilterOptions from "./components/FilterOptions";
 import PlanActions from "./components/PlanActions";
+import CoffeeNote, { COFFEE_URL } from "./components/CoffeeNote";
 import { activeFilterCount, NO_FILTERS, type Filters } from "./lib/filters";
 import "./App.css";
 
@@ -229,19 +230,32 @@ function App() {
           <a className="brand" href="/" translate="no">
             SF Radar<span className="dot-red">.</span>
           </a>
-          {/* Phones: Group & share sits up here, level with the logo. From
-              720px the same button lives at the end of the control row. */}
-          {events.length > 0 && (
-            <Dropdown
-              className="dropdown--share dropdown--share-top"
-              label="Group & share"
-              panelLabel="Group, share and calendar"
-              align="right"
-              wide
+          <div className="top__actions">
+            <a
+              className="pill coffee"
+              href={COFFEE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Buy me a coffee (opens in a new tab)"
             >
-              <PlanActions attendingEvents={savedEvents} loggedNights={[]} startDate={null} />
-            </Dropdown>
-          )}
+              <span aria-hidden="true">☕</span>
+              <span className="coffee__short">Tip</span>
+              <span className="coffee__text">Buy me a coffee</span>
+            </a>
+            {/* Phones: Group & share sits up here, level with the logo. From
+                720px the same button lives at the end of the control row. */}
+            {events.length > 0 && (
+              <Dropdown
+                className="dropdown--share dropdown--share-top"
+                label="Group & share"
+                panelLabel="Group, share and calendar"
+                align="right"
+                wide
+              >
+                <PlanActions attendingEvents={savedEvents} loggedNights={[]} startDate={null} />
+              </Dropdown>
+            )}
+          </div>
         </header>
 
         <main id="main">
@@ -370,6 +384,11 @@ function App() {
                 Show more ({remaining} left)
               </button>
             </div>
+          )}
+
+          {/* Only once the whole list has been scrolled through. */}
+          {shown.length > 0 && remaining === 0 && (
+            <CoffeeNote className="coffee-note--end" lead="Found something good? SF Radar is free, no paywall." />
           )}
         </section>
 

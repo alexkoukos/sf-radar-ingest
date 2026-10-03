@@ -18,6 +18,7 @@ import SubscribePanel from "./SubscribePanel";
 import CopyField from "./CopyField";
 import GroupHubSection from "./GroupHubSection";
 import HowItWorks from "./HowItWorks";
+import CoffeeNote from "./CoffeeNote";
 
 const NAME_KEY = "sfradar:v1:displayName";
 const TZ_KEY = "sfradar:v1:tzMode";
@@ -316,6 +317,8 @@ function PlanActions({ attendingEvents, loggedNights, startDate }: PlanActionsPr
 
       {/* ── HOW THIS WORKS ────────────────────────────────────────────── */}
       <HowItWorks />
+
+      <CoffeeNote className="coffee-note--hub" lead="Planning with SF Radar? It's free and I keep it running myself." />
       </div>
     </div>
   );
