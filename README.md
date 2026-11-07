@@ -2,7 +2,21 @@
 
 A live, ranked list of real San Francisco tech, startup and investor events, for someone spending a short, fixed stay in the city with no existing local network. Pick a day and it answers one question: **out of everything happening that day, what's actually worth walking into?**
 
-Live at **https://sf-radar-ingest.vercel.app**.
+**Live: [sf-radar-ingest.vercel.app](https://sf-radar-ingest.vercel.app)**
+
+![SF Radar](sf-radar-ingest/sf-radar-web/public/og-image.png)
+
+**Stack:** a Java 21 batch job scrapes and scores events every 6 hours (GitHub Actions); Supabase Postgres holds the data and does all the ordering; a Vite + React + TypeScript app on Vercel shows it, with a few Vercel functions for trip groups and calendar feeds.
+
+## Contents
+
+- [The problem this solves](#the-problem-this-solves)
+- [Architecture](#architecture) and [repository layout](#repository-layout)
+- [Data source](#data-source), [normalization & dedupe](#normalization--dedupe), [scoring](#scoring)
+- [Ingestion resilience](#ingestion-resilience) and [ghost events](#ghost-events-nothing-is-ever-hard-deleted)
+- [The database layer](#the-database-layer), [security](#security), [deployment](#deployment)
+- [The frontend](#the-frontend) and [trip groups](#trip-groups)
+- [Running locally](#running-locally)
 
 ## The problem this solves
 
@@ -15,18 +29,33 @@ So the ranking treats **accessibility (free + open RSVP) as a co-equal signal wi
 
 ## Architecture
 
-```
-Java batch job   →   Supabase Postgres   →   PostgREST   →   Vite + React   →   Vercel
-(scrape, score)       (all filtering/          (auto REST      (renders             (static
-                       sorting logic)            API)           already-sorted        hosting)
-                                                                 data)
+```mermaid
+flowchart LR
+    L[Luma pages] --> J[Java batch job<br/>scrape, dedupe, score]
+    J -- upsert --> P[(Supabase Postgres<br/>all filtering and ordering)]
+    P -- PostgREST, anon key, read only --> W[Vite + React app<br/>on Vercel]
+    P -- service role --> F[Vercel functions<br/>trip groups, .ics feeds]
+    F --> W
 ```
 
 - **Java** (`src/main/java/com/sfradar/ingest/`) is a standalone batch job: fetch, normalize, dedupe, score, upsert, exit. Never a server, and no REST endpoints of its own.
 - **Postgres** owns every piece of filtering, time-window, and sort logic, exposed through one RPC function the frontend calls directly.
-- **The frontend** talks to Postgres only through PostgREST/Supabase's client library, with no custom API layer, no client-side re-sorting, and no client-side timezone math.
+- **The frontend** reads the event list straight from PostgREST with the read-only anon key: no API layer in between, no client-side re-sorting, no client-side timezone math.
+- **Vercel functions** (`sf-radar-web/api/`) exist only for what the anon key must not reach: passphrase-gated trip groups and calendar feeds. They use the service-role key on the server and never return more than the caller may see.
 
-Data flows one direction only: Java writes, Postgres orders, React reads and displays. Nothing downstream of Postgres is allowed to override its ordering.
+Event data flows one direction only: Java writes, Postgres orders, React reads and displays. Nothing downstream of Postgres is allowed to override its ordering.
+
+## Repository layout
+
+```text
+.github/workflows/      ingest.yml (every 6 hours), keepalive.yml (daily ping)
+sf-radar-ingest/
+  src/main/java/…/      the Java ingest job: source, dedupe, classify, score, store, run
+  src/main/resources/   luma-sources.json (the curated pages), schema.sql (events, runs, RPC)
+  src/test/             unit tests, with saved Luma pages as fixtures
+  migrations/           hand-run SQL for plans and trip groups
+  sf-radar-web/         the Vite + React app and its Vercel functions (api/)
+```
 
 ## Data source
 
@@ -133,7 +162,7 @@ So a target that fails for one run (or even three or four, since ingestion runs 
 
 ## The database layer
 
-Two tables, two functions, defined once in `src/main/resources/schema.sql`.
+The event side is two tables and two functions, defined once in `src/main/resources/schema.sql` and re-applied by every ingest run. Shared plans and trip groups (`plans`, `groups`, `group_members`, `custom_events`, `rate_limits`) live in the hand-run [migrations](sf-radar-ingest/migrations/README.md).
 
 **`events`**: one row per `api_id`, holding the raw scraped fields (name, time, location, host, price, RSVP mechanics), the derived `category` / `rsvp_type`, the single `score`, and `first_seen_at` / `last_seen_at`.
 
@@ -236,16 +265,23 @@ Each member has a revocable feed token. The combined feed URL (`…/group/feed/<
 
 ## Running locally
 
+Requirements: JDK 21 and Node 20+. Paths below are from `sf-radar-ingest/`.
+
 ```bash
 cd sf-radar-ingest
 
-# Java ingest job: writes to Postgres, needs DB credentials in .env
-mvn package && java -jar target/sf-radar-ingest.jar
+# Ingest job: scrapes, scores and writes to Postgres
+export SFRADAR_DB_URL=jdbc:postgresql://…   # the Supabase session pooler
+export SFRADAR_DB_USER=… SFRADAR_DB_PASSWORD=…
+./mvnw package && java -jar target/sf-radar-ingest.jar
+./mvnw test                                 # unit tests, no database needed
 
-# Frontend
+# Web app: reads whatever is live in Supabase; needs neither Java nor a local database
 cd sf-radar-web
+cp .env.example .env.local                  # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 npm install
 npm run dev
+npm test
 ```
 
-The frontend needs `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (safe to expose, see [Security](#security)) in its environment. It never needs Java or a local database running; it just reads whatever's already live in Supabase.
+The anon key is safe in the browser (see [Security](#security)). The server-only keys in `.env.example` are needed only to run the Vercel functions locally (`vercel dev`). More on the app: [sf-radar-web/README.md](sf-radar-ingest/sf-radar-web/README.md).
