@@ -19,7 +19,7 @@ import { adminConfigured, adminSelect, adminUpdate, rateAllow } from "../_lib/su
  * Body: { name?, currentPassphrase?, newPassphrase? } (at least one of name /
  * newPassphrase). The group is taken from the session COOKIE, never the body.
  *
- * Membership is symmetric (no owner role, per HANDOFF): holding a valid
+ * Membership is symmetric (no owner role, by design): holding a valid
  * passphrase-gate cookie for this group is the authorisation bar. Changing
  * the passphrase additionally requires the current one — bcrypt-compared
  * here — so a left-open session can't silently rotate it. Attempts are

@@ -7,7 +7,7 @@ import com.sfradar.ingest.model.ScoredEvent;
  * Combines keyword, venue, and accessibility relevance into one
  * time-invariant score, averaged co-equally - accessibility is a
  * first-class signal here, not a tiebreaker layered on top of the other
- * two (see CLAUDE.md). HostScorer is deliberately absent: it's on the cut
+ * two (see Scoring in the README). HostScorer is deliberately absent: it's on the cut
  * list, so every host defaults to equal weight rather than being tiered.
  */
 public final class EventScorer {

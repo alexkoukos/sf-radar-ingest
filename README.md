@@ -236,7 +236,9 @@ Each member has a revocable feed token. The combined feed URL (`…/group/feed/<
 
 ## Running locally
 
-```
+```bash
+cd sf-radar-ingest
+
 # Java ingest job: writes to Postgres, needs DB credentials in .env
 mvn package && java -jar target/sf-radar-ingest.jar
 

@@ -13,7 +13,7 @@ import { GROUP_SLUG_RE } from "./groupIds.js";
  * Signed with GROUP_TOKEN_SECRET (Vercel env var). It is only ever carried in
  * an `HttpOnly; Secure; SameSite=Lax` cookie — never readable by client JS,
  * never accepted from a request body. Single active group at a time
- * (see HANDOFF): a new login overwrites the cookie.
+ * by design: a new login overwrites the cookie.
  *
  * This is a gate token, not an identity/auth token: it says a passphrase was
  * entered, nothing about *who*. Naming a member is a separate step.
